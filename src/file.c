@@ -16,14 +16,17 @@ long file_length(FILE* file) {
     return length;
 }
 
-char* file_read(const char* file_path) {
+char* file_read(const char* file_path, size_t* bytes_read) {
     FILE* file = fopen(file_path, "rb");
     if (file == NULL) return NULL;
+
+    size_t _;
+    if (bytes_read == NULL) bytes_read = &_;
 
     long length = file_length(file);
 
     char* buf = malloc(length + 1);
-    fread(buf, sizeof(buf[0]), length, file);
+    *bytes_read = fread(buf, sizeof(buf[0]), length, file);
     buf[length] = '\0';
 
     fclose(file);

@@ -1,0 +1,21 @@
+#pragma once
+
+#include "string_view.h"
+
+typedef enum {
+    TT_INT,
+    TT_PLUS,
+    TT_MINUS,
+    TT_TIMES,
+    TT_DIV,
+    TT_EOF,
+} TokenType;
+
+const char* tt_repr(TokenType tt);
+
+const char* tt_str(TokenType tt);
+
+typedef struct {
+    TokenType type;
+    StringView text;
+} Token;

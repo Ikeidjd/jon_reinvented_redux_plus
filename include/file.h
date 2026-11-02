@@ -1,3 +1,5 @@
+#pragma once
+
 #include "stdio.h"
 
 // Returns the length of a file
@@ -8,7 +10,7 @@ long file_length(FILE* file);
 // Reads an entire file to a null-terminated dynamically allocated string
 // Remember to call file_unread on it!
 // May return NULL to signal an error
-char* file_read(const char* file_path);
+char* file_read(const char* file_path, size_t* bytes_read);
 
 // Deallocates a string returned by file_read
 // Really just a wrapper for free
