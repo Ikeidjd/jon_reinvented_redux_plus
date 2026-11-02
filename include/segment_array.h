@@ -4,7 +4,7 @@
 
 // Inspired by https://danielchasehooper.com/posts/segment_array/
 typedef struct {
-    int* data;
+    void* data;
     size_t length;
 } SegaSegment;
 
@@ -17,17 +17,41 @@ typedef struct {
 typedef struct {
     SegaSegments segments;
     size_t length_of_active;
-} SegmentArray;
+    size_t total_length;
+} _SegmentArray;
+
+#define SegmentArray(type) \
+struct { \
+    union { \
+        _SegmentArray _sega; \
+        type* _type_info; \
+    }; \
+}
 
 // Sega? Holy Sonic reference
-void sega_init(SegmentArray* sega);
+void _sega_init(_SegmentArray* sega, size_t elem_size);
 
-void sega_append(SegmentArray* sega, int i);
+void _sega_maybe_resize(_SegmentArray* sega, size_t elem_size);
+
+void* _sega_get(_SegmentArray* sega, size_t index, size_t elem_size);
 
 void sega_get_indices(size_t index, size_t* index_of_segment, size_t* index_in_segment);
 
-int* sega_get_ptr(SegmentArray* sega, size_t index);
+#define sega_init(sega) _sega_init(&(sega)->_sega, sizeof(*(sega)->_type_info))
 
-int sega_get(SegmentArray* sega, size_t index);
+#define sega_append(sega, value) \
+do { \
+    _SegmentArray* real = &(sega)->_sega; \
+    _sega_maybe_resize(real, sizeof((sega)->_type_info)); \
+    sega_set(sega, real->total_length, value); \
+\
+    real->segments.data[real->segments.length - 1].length++; \
+    real->length_of_active++; \
+    real->total_length++; \
+} while (0)
 
-void sega_set(SegmentArray* sega, size_t index, int i);
+#define sega_get_ptr(sega, index) ((typeof(*(sega)->_type_info)*) _sega_get(&(sega)->_sega, index, sizeof(*(sega)->_type_info)))
+
+#define sega_get(sega, index) *sega_get_ptr(sega, index)
+
+#define sega_set(sega, index, value) *sega_get_ptr(sega, index) = value

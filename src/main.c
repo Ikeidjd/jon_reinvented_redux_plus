@@ -29,7 +29,7 @@ static void dyna_test(void) {
 }
 
 static void sega_test(void) {
-    SegmentArray sega;
+    SegmentArray(int) sega;
     sega_init(&sega);
 
     for (size_t i = 0; i < 32; i++) {
@@ -38,12 +38,18 @@ static void sega_test(void) {
         printf("%zu %zu %zu\n", i, index_of_segment, index_in_segment);
     }
 
-    for (size_t i = 0; i < 32; i++) {
+    printf("\n");
+
+    for (int i = 0; i < 32; i++) {
         sega_append(&sega, i);
+        printf("%p\n", (void*) &sega_get(&sega, i));
     }
+
+    printf("\n");
 
     for (size_t i = 32; i--;) {
         printf("%d\n", sega_get(&sega, i));
+        printf("%p\n", (void*) &sega_get(&sega, i));
     }
 }
 

@@ -4,12 +4,14 @@
 
 #include <stdlib.h>
 
-#define dyna_init(dyna) \
+#define dyna_init_with_capacity(dyna, initial_capacity) \
 do { \
-    (dyna)->data = malloc(DYNA_INITIAL_CAPACITY * sizeof((dyna)->data[0])); \
+    (dyna)->data = malloc((initial_capacity) * sizeof((dyna)->data[0])); \
     (dyna)->length = 0; \
-    (dyna)->capacity = DYNA_INITIAL_CAPACITY; \
+    (dyna)->capacity = (initial_capacity); \
 } while(0)
+
+#define dyna_init(dyna) dyna_init_with_capacity(dyna, DYNA_INITIAL_CAPACITY)
 
 #define dyna_append(dyna, elem) \
 do { \
