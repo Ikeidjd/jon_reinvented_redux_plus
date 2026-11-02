@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stddef.h>
+#include <stdbool.h>
 
 typedef struct {
     const char* data;
@@ -18,3 +19,9 @@ StringView sv_from_cstr(const char* str);
 StringView sv_from_str_length(const char* str, size_t length);
 
 StringView sv_slice(StringView sv, size_t start, size_t length);
+
+StringView sv_slice_from(StringView sv, size_t start);
+
+StringView sv_slice_until(StringView sv, size_t length);
+
+bool sv_to_int(StringView sv, int* out);
