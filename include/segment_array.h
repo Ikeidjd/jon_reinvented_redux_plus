@@ -40,7 +40,7 @@ void sega_get_indices(size_t index, size_t* index_of_segment, size_t* index_in_s
 #define sega_init(sega) _sega_init(&(sega)->_sega, sizeof(*(sega)->_type_info))
 
 // OH MY GOD!!!!
-// I forgot the asterisk in sizeof(*(sega)->_type_info), meaning that when using Sega_Node, the size was 8 insteadof 56
+// I forgot the asterisk in sizeof(*(sega)->_type_info), meaning that when using Sega_Node, the size was 8 instead of 56
 // No wonder it segfaulted...
 // Thanks to Dr. Memory for making this easier to spot
 #define sega_append(sega, value) \
