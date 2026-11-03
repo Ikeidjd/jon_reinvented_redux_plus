@@ -113,6 +113,7 @@ int main(int argc, char** argv) {
 
     node_println(ast);
 
+    sega_destroy(sega_node);
     file_unread(src_cstr);
     return 0;
 }

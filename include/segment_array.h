@@ -37,6 +37,8 @@ void* _sega_get(_SegmentArray* sega, size_t index, size_t elem_size);
 
 void sega_get_indices(size_t index, size_t* index_of_segment, size_t* index_in_segment);
 
+void _sega_destroy(const _SegmentArray* sega);
+
 #define sega_init(sega) _sega_init(&(sega)->_sega, sizeof(*(sega)->_type_info))
 
 // OH MY GOD!!!!
@@ -61,3 +63,5 @@ do { \
 #define sega_set(sega, index, value) *sega_get_ptr(sega, index) = value
 
 #define sega_length(sega) (sega)._sega.total_length
+
+#define sega_destroy(sega) _sega_destroy(&(sega)._sega)
