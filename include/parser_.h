@@ -21,18 +21,26 @@ typedef struct {
     Sega_Node* sega;
 } Parser;
 
-bool parser_init(Parser* parser, StringView src);
+bool parser_init(Parser* self, StringView src);
 
-Node* parser_new_node(Parser* parser, Node node);
+Node* parser_new_node(Parser* self, Node node);
 
-Node* parser_parse(Parser* parser, Sega_Node* sega);
+Node* parser_parse(Parser* self, Sega_Node* sega);
 
-Node* parser_expr(Parser* parser);
+Node* parse_expr(Parser* self);
 
-Node* parser_prec(Parser* parser, Precedence prev_prec);
+Node* parse_prec(Parser* self, Precedence prev_prec);
 
-Node* parser_prefix_expr(Parser* parser);
+Node* parse_prefix_expr(Parser* self);
 
-bool parser_advance(Parser* parser);
+bool parser_advance(Parser* self);
 
-bool parser_expect(Parser* parser, TokenType tt);
+bool parser_matches(Parser* self, TokenType tt);
+
+bool parser_expect(Parser* self, TokenType tt);
+
+void parser_error(Parser* self, const char* fmt, ...) __attribute__((format(printf, 2, 3)));
+
+void parser_error_expected(Parser* self, StringView expected);
+
+void parser_error_expected_cstr(Parser* self, const char* expected);

@@ -6,9 +6,9 @@
 #include "math_utils.h"
 
 void _sega_maybe_resize(_SegmentArray* sega, size_t elem_size) {
-    if (sega->segments.length == 0 || sega->length_of_active >= (size_t) (1 << (sega->segments.length - 1))) {
+    if (sega->segments.length == 0 || sega->length_of_active >= (1ull << (sega->segments.length - 1))) {
         SegaSegment segment = {
-            .data = malloc((1 << sega->segments.length) * elem_size),
+            .data = malloc((1ull << sega->segments.length) * elem_size),
             .length = 0,
         };
 

@@ -85,7 +85,7 @@ int main(int argc, char** argv) {
 
     printf("FILE_START\n%s\nFILE_END\n\n", src_cstr);
 
-    StringView src = sv_from_str_length(src_cstr, length);
+    StringView src = sv_new(src_cstr, length);
 
     Lexer lexer;
     lexer_init(&lexer, src);
@@ -106,10 +106,7 @@ int main(int argc, char** argv) {
 
     Node* ast = parser_parse(&parser, &sega_node);
 
-    if (!ast) {
-        fprintf(stderr, "Something went wrong while parsing.\n");
-        return -1;
-    }
+    if (!ast) return -1;
 
     node_println(ast);
 

@@ -2,20 +2,21 @@
 
 #include "char_utils.h"
 
-void lexer_init(Lexer* lexer, StringView src) {
-    *lexer = (Lexer) {
+void lexer_init(Lexer* self, StringView src) {
+    *self = (Lexer) {
         .src = src,
+        .line_text = sv_first_line(src),
         .i = 0,
-        .line = 1,
-        .pos = 1,
+        .line = 0,
+        .col = 0,
     };
 }
 
-bool lexer_next(Lexer* lexer, Token* out) {
-    lexer_skip_whitespace(lexer);
-    lexer_setup_start(lexer);
+bool lexer_next(Lexer* self, Token* out) {
+    lexer_skip_whitespace(self);
+    lexer_setup_start(self);
 
-    char c = lexer_advance(lexer);
+    char c = lexer_advance(self);
     TokenType tt;
 
     switch (c) {
@@ -37,7 +38,7 @@ bool lexer_next(Lexer* lexer, Token* out) {
         default: {
             if (is_ascii_digit(c)) {
                 tt = TT_INT;
-                lexer_skip_int(lexer);
+                lexer_skip_int(self);
             } else {
                 return false;
             }
@@ -46,54 +47,67 @@ bool lexer_next(Lexer* lexer, Token* out) {
 
     *out = (Token) {
         .type = tt,
-        .text = tt == TT_EOF ? sv_from_literal("") : sv_slice(lexer->src, lexer->start_i, lexer->i - lexer->start_i),
+        .text = tt == TT_EOF ? sv_lit("") : sv_slice(self->src, self->start_i, self->i - self->start_i),
+        .line_text = self->line_text,
+        .line_number = self->line,
+        .start_col = self->start_col,
+        .end_col = self->col,
     };
 
     return true;
 }
 
-void lexer_skip_int(Lexer* lexer) {
-    while (is_ascii_digit(lexer_peek(lexer))) {
-        lexer_advance(lexer);
+void lexer_skip_int(Lexer* self) {
+    while (is_ascii_digit(lexer_peek(self))) {
+        lexer_advance(self);
     }
 }
 
-void lexer_skip_whitespace(Lexer* lexer) {
+void lexer_skip_whitespace(Lexer* self) {
     while (true) {
-        char c = lexer_peek(lexer);
+        char c = lexer_peek(self);
 
         if (is_ascii_whitespace(c)) {
-            lexer_advance(lexer);
+            lexer_advance(self);
             continue;
         }
 
         if (c == '#') {
-            while (lexer_advance(lexer) != '\n');
+            while (lexer_advance(self) != '\n');
         }
 
         break;
     }
 }
 
-void lexer_setup_start(Lexer* lexer) {
-    lexer->start_i = lexer->i;
-    lexer->start_line = lexer->line;
-    lexer->start_pos = lexer->pos;
+void lexer_setup_start(Lexer* self) {
+    self->start_i = self->i;
+    self->start_line = self->line;
+    self->start_col = self->col;
 }
 
-char lexer_peek(Lexer* lexer) {
-    return lexer->i < lexer->src.length ? lexer->src.data[lexer->i] : '\0';
+char lexer_peek(Lexer* self) {
+    return self->i < self->src.length ? self->src.data[self->i] : '\0';
 }
 
-char lexer_advance(Lexer* lexer) {
-    char c = lexer_peek(lexer);
-    lexer->i++;
+char lexer_advance(Lexer* self) {
+    char c = lexer_peek(self);
+    self->i++;
+
+    if (c == '\n') {
+        self->line_text = sv_first_line(sv_slice_from(self->src, self->i));
+        self->line++;
+        self->col = 0;
+    } else {
+        self->col++;
+    }
+
     return c;
 }
 
-bool lexer_matches(Lexer* lexer, char c) {
-    if (lexer_peek(lexer) == c) {
-        lexer_advance(lexer);
+bool lexer_matches(Lexer* self, char c) {
+    if (lexer_peek(self) == c) {
+        lexer_advance(self);
         return true;
     }
 

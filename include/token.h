@@ -18,4 +18,8 @@ const char* tt_str(TokenType tt);
 typedef struct {
     TokenType type;
     StringView text;
+    StringView line_text;
+    size_t line_number;
+    size_t start_col;
+    size_t end_col;
 } Token;

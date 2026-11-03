@@ -3,11 +3,13 @@
 #include <limits.h>
 #include <string.h>
 
-StringView sv_from_cstr(const char* str) {
-    return sv_from_str_length(str, strlen(str));
+#include "char_utils.h"
+
+StringView sv_cstr(const char* str) {
+    return sv_new(str, strlen(str));
 }
 
-StringView sv_from_str_length(const char* str, size_t length) {
+StringView sv_new(const char* str, size_t length) {
     return (StringView) {
         .data = str,
         .length = length,
@@ -46,4 +48,38 @@ bool sv_to_int(StringView sv, int* out) {
 
     *out = (int) n;
     return true;
+}
+
+StringView sv_first_line(StringView sv) {
+    size_t i = 0;
+
+    for (; i < sv.length; i++) {
+        if (sv.data[i] == '\n') break;
+    }
+
+    return sv_slice_until(sv, i);
+}
+
+StringView sv_trim_left(StringView sv) {
+    size_t start = 0;
+
+    for (; start < sv.length; start++) {
+        if (!is_ascii_whitespace(sv.data[start])) break;
+    }
+
+    return sv_slice_from(sv, start);
+}
+
+StringView sv_trim_right(StringView sv) {
+    size_t length = sv.length;
+
+    for (; length > 0; length--) {
+        if (!is_ascii_whitespace(sv.data[length - 1])) break;
+    }
+
+    return sv_slice_until(sv, length);
+}
+
+StringView sv_trim(StringView sv) {
+    return sv_trim_left(sv_trim_right(sv));
 }
