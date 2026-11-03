@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 
 Precedence prec_from(TokenType tt) {
     switch (tt) {
@@ -24,37 +25,47 @@ bool parser_init(Parser* parser, StringView src) {
     return lexer_next(&parser->lexer, &parser->cur) && lexer_next(&parser->lexer, &parser->lookahead);
 }
 
-bool parser_parse(Parser* parser, int* out) {
-    return parser_expr(parser, out) && parser_expect(parser, TT_EOF);
+Node* parser_new_node(Parser* parser, Node node) {
+    sega_append(parser->sega, node);
+    return sega_get_ptr(parser->sega, sega_length(*parser->sega) - 1);
 }
 
-bool parser_expr(Parser* parser, int* out) {
-    return parser_prec(parser, out, PREC_NONE);
+Node* parser_parse(Parser* parser, Sega_Node* sega) {
+    parser->sega = sega;
+    Node* node = parser_expr(parser);
+    if (!parser_expect(parser, TT_EOF)) return NULL;
+    return node;
 }
 
-bool parser_prec(Parser* parser, int* out, Precedence prev_prec) {
-    if (!parser_prefix_expr(parser, out)) return false;
+Node* parser_expr(Parser* parser) {
+    return parser_prec(parser, PREC_NONE);
+}
+
+Node* parser_prec(Parser* parser, Precedence prev_prec) {
+    Node* lhs = parser_prefix_expr(parser);
+    if (!lhs) return false;
 
     Precedence next_prec;
     while ((next_prec = prec_from(parser->cur.type)) > prev_prec) {
         Token op = parser->cur;
         parser_advance(parser);
 
-        int aux;
-        if (!parser_prec(parser, &aux, next_prec)) return false;
+        Node* rhs = parser_prec(parser, next_prec);
+        if (!rhs) return false;
 
+        BinOpType op_type;
         switch (op.type) {
             case TT_PLUS: {
-                *out = *out + aux;
+                op_type = BIN_ADD;
             } break;
             case TT_MINUS: {
-                *out = *out - aux;
+                op_type = BIN_SUB;
             } break;
             case TT_TIMES: {
-                *out = *out * aux;
+                op_type = BIN_MUL;
             } break;
             case TT_DIV: {
-                *out = *out / aux;
+                op_type = BIN_DIV;
             } break;
             case TT_INT:
             case TT_EOF: {
@@ -62,28 +73,44 @@ bool parser_prec(Parser* parser, int* out, Precedence prev_prec) {
                 exit(-1);
             } break;
         }
+
+        lhs = parser_new_node(parser, (Node) {
+            .type = NODE_BIN_OP,
+            .as.bin_op = {
+                .type = op_type,
+                .token = op,
+                .left = lhs,
+                .right = rhs,
+            },
+        });
     }
 
-    return true;
+    return lhs;
 }
 
-bool parser_prefix_expr(Parser* parser, int* out) {
+Node* parser_prefix_expr(Parser* parser) {
     switch (parser->cur.type) {
         case TT_INT: {
-            if (!sv_to_int(parser->cur.text, out)) return false;
+            Token token = parser->cur;
             parser_advance(parser);
-            return true;
+
+            return parser_new_node(parser, (Node) {
+                .type = NODE_INT,
+                .as.integer = {
+                    .token = token,
+                },
+            });
         } break;
         case TT_PLUS:
         case TT_MINUS:
         case TT_TIMES:
         case TT_DIV:
         case TT_EOF: {
-            return false;
+            return NULL;
         } break;
     }
 
-    return false;
+    return NULL;
 }
 
 bool parser_advance(Parser* parser) {

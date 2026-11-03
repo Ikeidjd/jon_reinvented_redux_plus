@@ -7,6 +7,7 @@
 #include "dynamic_array.h"
 #include "segment_array.h"
 #include "token.h"
+#include "node.h"
 #include "lexer.h"
 #include "parser_.h"
 
@@ -32,7 +33,7 @@ static void sega_test(void) {
     SegmentArray(int) sega;
     sega_init(&sega);
 
-    for (size_t i = 0; i < 32; i++) {
+    for (size_t i = 0; i < 512; i++) {
         size_t index_of_segment, index_in_segment;
         sega_get_indices(i, &index_of_segment, &index_in_segment);
         printf("%zu %zu %zu\n", i, index_of_segment, index_in_segment);
@@ -40,14 +41,14 @@ static void sega_test(void) {
 
     printf("\n");
 
-    for (int i = 0; i < 32; i++) {
+    for (int i = 0; i < 512; i++) {
         sega_append(&sega, i);
         printf("%p\n", (void*) &sega_get(&sega, i));
     }
 
     printf("\n");
 
-    for (size_t i = 32; i--;) {
+    for (size_t i = 512; i--;) {
         printf("%d\n", sega_get(&sega, i));
         printf("%p\n", (void*) &sega_get(&sega, i));
     }
@@ -100,13 +101,17 @@ int main(int argc, char** argv) {
     Parser parser;
     parser_init(&parser, src);
 
-    int result;
-    if (!parser_parse(&parser, &result)) {
+    Sega_Node sega_node;
+    sega_init(&sega_node);
+
+    Node* ast = parser_parse(&parser, &sega_node);
+
+    if (!ast) {
         fprintf(stderr, "Something went wrong while parsing.\n");
         return -1;
     }
 
-    printf("%d\n", result);
+    node_println(ast);
 
     file_unread(src_cstr);
     return 0;

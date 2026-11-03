@@ -4,6 +4,7 @@
 
 #include "token.h"
 #include "lexer.h"
+#include "node.h"
 
 typedef enum {
     PREC_NONE,
@@ -17,17 +18,20 @@ typedef struct {
     Lexer lexer;
     Token cur;
     Token lookahead;
+    Sega_Node* sega;
 } Parser;
 
 bool parser_init(Parser* parser, StringView src);
 
-bool parser_parse(Parser* parser, int* out);
+Node* parser_new_node(Parser* parser, Node node);
 
-bool parser_expr(Parser* parser, int* out);
+Node* parser_parse(Parser* parser, Sega_Node* sega);
 
-bool parser_prec(Parser* parser, int* out, Precedence prev_prec);
+Node* parser_expr(Parser* parser);
 
-bool parser_prefix_expr(Parser* parser, int* out);
+Node* parser_prec(Parser* parser, Precedence prev_prec);
+
+Node* parser_prefix_expr(Parser* parser);
 
 bool parser_advance(Parser* parser);
 
