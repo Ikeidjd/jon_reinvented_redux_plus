@@ -23,6 +23,8 @@ bool lexer_next(Lexer* self, Token* out);
 
 void lexer_skip_int(Lexer* self);
 
+TokenType lexer_skip_identifier(Lexer* self);
+
 void lexer_skip_whitespace(Lexer* self);
 
 void lexer_setup_start(Lexer* self);

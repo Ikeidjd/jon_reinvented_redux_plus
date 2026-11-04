@@ -26,4 +26,12 @@ StringView sv_slice_until(StringView sv, size_t length);
 
 StringView sv_first_line(StringView sv);
 
+StringView sv_trim_left(StringView sv);
+
+StringView sv_trim_right(StringView sv);
+
+StringView sv_trim(StringView sv);
+
+bool sv_eq_cstr(StringView sv, const char* cstr);
+
 bool sv_to_int(StringView sv, int* out);

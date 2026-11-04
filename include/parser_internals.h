@@ -9,11 +9,14 @@
 
 typedef enum {
     PREC_NONE,
+    PREC_ASSIGN,
     PREC_ADD,
     PREC_MUL,
 } Precedence;
 
 Precedence prec_from(TokenType tt);
+
+bool prec_is_left_associative(Precedence prec);
 
 typedef struct {
     Sega_Node node_buffer;
@@ -23,19 +26,23 @@ typedef struct {
 
 void parser_init(Parser* self, Tokens tokens, Sega_Node node_buffer);
 
-Node* parser_new_node(Parser* self, Node node);
+NodeExpr* parser_new_expr(Parser* self, NodeExpr node);
 
-Node* parser_parse(Parser* self);
+bool parser_parse(Parser* self, Program* program);
 
-Node* parse_expr(Parser* self);
+NodeDecl* parse_decl(Parser* self);
 
-Node* parse_prec(Parser* self, Precedence prev_prec);
+NodeExpr* parse_expr(Parser* self);
 
-Node* parse_prefix_expr(Parser* self);
+NodeExpr* parse_prec(Parser* self, Precedence prev_prec);
+
+NodeExpr* parse_prefix_expr(Parser* self);
 
 Token parser_cur(Parser* self);
 
 void parser_advance(Parser* self);
+
+bool parser_has(Parser* self, TokenType tt);
 
 bool parser_matches(Parser* self, TokenType tt);
 

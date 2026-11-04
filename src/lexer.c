@@ -5,6 +5,15 @@
 
 #include "char_utils.h"
 
+typedef struct {
+    const char* name;
+    TokenType tt;
+} Keyword;
+
+static Keyword keywords[] = {
+    { "let", TT_KW_LET },
+};
+
 bool lex_program(StringView src, Tokens* token_buf) {
     Lexer self;
     lexer_init(&self, src);
@@ -48,6 +57,18 @@ bool lexer_next(Lexer* self, Token* out) {
         case '/': {
             tt = TT_DIV;
         } break;
+        case '%': {
+            tt = TT_MOD;
+        } break;
+        case '=': {
+            tt = TT_EQ;
+        } break;
+        case ':': {
+            tt = TT_COLON;
+        } break;
+        case ';': {
+            tt = TT_SEMI;
+        } break;
         case '\0': {
             tt = TT_EOF;
         } break;
@@ -55,6 +76,8 @@ bool lexer_next(Lexer* self, Token* out) {
             if (is_ascii_digit(c)) {
                 tt = TT_INT;
                 lexer_skip_int(self);
+            } else if (is_ascii_alpha(c) || c == '_') {
+                tt = lexer_skip_identifier(self);
             } else {
                 fprintf(stderr, "Syntax error at line %zu, pos %zu: invalid character '%c'.\n", self->start_line, self->start_col, c);
                 return false;
@@ -78,6 +101,20 @@ void lexer_skip_int(Lexer* self) {
     while (is_ascii_digit(lexer_peek(self))) {
         lexer_advance(self);
     }
+}
+
+TokenType lexer_skip_identifier(Lexer* self) {
+    while (is_ascii_alnum(lexer_peek(self)) || lexer_peek(self) == '_') {
+        lexer_advance(self);
+    }
+
+    StringView sv = sv_slice(self->src, self->start_i, self->i - self->start_i);
+
+    for (size_t i = 0; i < sizeof(keywords) / sizeof(keywords[0]); i++) {
+        if (sv_eq_cstr(sv, keywords[i].name)) return keywords[i].tt;
+    }
+
+    return TT_ID;
 }
 
 void lexer_skip_whitespace(Lexer* self) {

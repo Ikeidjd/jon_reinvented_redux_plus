@@ -5,16 +5,27 @@
 
 typedef enum {
     TT_INT,
+
     TT_PLUS,
     TT_MINUS,
     TT_TIMES,
     TT_DIV,
+    TT_MOD,
+
+    TT_EQ,
+
+    TT_COLON,
+    TT_SEMI,
+
+    TT_ID,
+    TT_KW_LET,
+
     TT_EOF,
 } TokenType;
 
 const char* tt_repr(TokenType tt);
 
-const char* tt_str(TokenType tt);
+const char* tt_error_message_name(TokenType tt);
 
 typedef struct {
     TokenType type;
