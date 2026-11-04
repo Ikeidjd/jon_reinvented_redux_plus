@@ -2,6 +2,7 @@
 #include "lexer_internals.h"
 
 #include <stdio.h>
+#include <stdarg.h>
 
 #include "char_utils.h"
 
@@ -12,22 +13,35 @@ typedef struct {
 
 static Keyword keywords[] = {
     { "let", TT_KW_LET },
+    { "int", TT_KW_INT },
+    { "float", TT_KW_FLOAT },
+    { "bool", TT_KW_BOOL },
+    { "true", TT_KW_TRUE },
+    { "false", TT_KW_FALSE },
+    { "char", TT_KW_CHAR },
 };
 
 bool lex_program(StringView src, Tokens* token_buf) {
     Lexer self;
     lexer_init(&self, src);
 
-    Token token;
-    while (lexer_next(&self, &token)) {
-        dyna_append(token_buf, token);
-        if (token.type == TT_EOF) return true;
+    bool success = true;
+
+    while (true) {
+        Token token;
+
+        if (lexer_next(&self, &token)) {
+            dyna_append(token_buf, token);
+            if (token.type == TT_EOF) break;
+        } else {
+            success = false;
+        }
     }
 
-    return false;
+    return success;
 }
 
-void lexer_init(Lexer* self, StringView src) {
+static void lexer_init(Lexer* self, StringView src) {
     *self = (Lexer) {
         .src = src,
         .line_text = sv_first_line(src),
@@ -37,7 +51,7 @@ void lexer_init(Lexer* self, StringView src) {
     };
 }
 
-bool lexer_next(Lexer* self, Token* out) {
+static bool lexer_next(Lexer* self, Token* out) {
     lexer_skip_whitespace(self);
     lexer_setup_start(self);
 
@@ -69,17 +83,20 @@ bool lexer_next(Lexer* self, Token* out) {
         case ';': {
             tt = TT_SEMI;
         } break;
+        case '\'': {
+            tt = TT_CHAR;
+            if (!lexer_skip_char(self)) return false;
+        } break;
         case '\0': {
             tt = TT_EOF;
         } break;
         default: {
             if (is_ascii_digit(c)) {
-                tt = TT_INT;
-                lexer_skip_int(self);
+                if (!lexer_skip_number(self, &tt)) return false;
             } else if (is_ascii_alpha(c) || c == '_') {
                 tt = lexer_skip_identifier(self);
             } else {
-                fprintf(stderr, "Syntax error at line %zu, pos %zu: invalid character '%c'.\n", self->start_line, self->start_col, c);
+                lexer_error(self, "invalid character '%c'", c);
                 return false;
             }
         } break;
@@ -97,13 +114,41 @@ bool lexer_next(Lexer* self, Token* out) {
     return true;
 }
 
-void lexer_skip_int(Lexer* self) {
+static bool lexer_skip_number(Lexer* self, TokenType* tt) {
     while (is_ascii_digit(lexer_peek(self))) {
         lexer_advance(self);
     }
+
+    if (lexer_matches(self, '.')) {
+        if (!is_ascii_digit(lexer_peek(self))) {
+            lexer_error(self, "float can't end on a '.'; add a '0' at the end");
+            return false;
+        }
+
+        while (is_ascii_digit(lexer_peek(self))) {
+            lexer_advance(self);
+        }
+
+        *tt = TT_FLOAT;
+    } else {
+        *tt = TT_INT;
+    }
+
+    return true;
 }
 
-TokenType lexer_skip_identifier(Lexer* self) {
+static bool lexer_skip_char(Lexer* self) {
+    lexer_advance(self);
+
+    if (!lexer_matches(self, '\'')) {
+        lexer_error(self, "unclosed character literal");
+        return false;
+    }
+
+    return true;
+}
+
+static TokenType lexer_skip_identifier(Lexer* self) {
     while (is_ascii_alnum(lexer_peek(self)) || lexer_peek(self) == '_') {
         lexer_advance(self);
     }
@@ -117,7 +162,7 @@ TokenType lexer_skip_identifier(Lexer* self) {
     return TT_ID;
 }
 
-void lexer_skip_whitespace(Lexer* self) {
+static void lexer_skip_whitespace(Lexer* self) {
     while (true) {
         char c = lexer_peek(self);
 
@@ -134,18 +179,20 @@ void lexer_skip_whitespace(Lexer* self) {
     }
 }
 
-void lexer_setup_start(Lexer* self) {
+static void lexer_setup_start(Lexer* self) {
     self->start_i = self->i;
     self->start_line = self->line;
     self->start_col = self->col;
 }
 
-char lexer_peek(Lexer* self) {
+static char lexer_peek(Lexer* self) {
     return self->i < self->src.length ? self->src.data[self->i] : '\0';
 }
 
-char lexer_advance(Lexer* self) {
+static char lexer_advance(Lexer* self) {
     char c = lexer_peek(self);
+    if (c == '\0') return c;
+
     self->i++;
 
     if (c == '\n') {
@@ -159,11 +206,33 @@ char lexer_advance(Lexer* self) {
     return c;
 }
 
-bool lexer_matches(Lexer* self, char c) {
+static bool lexer_matches(Lexer* self, char c) {
     if (lexer_peek(self) == c) {
         lexer_advance(self);
         return true;
     }
 
     return false;
+}
+
+static void lexer_error(Lexer* self, const char* fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+
+    fprintf(stderr, "Syntax error on line %zu: ", self->start_line + 1);
+    vfprintf(stderr, fmt, args);
+    fprintf(stderr, ".\n");
+    fprintf(stderr, SV_FMT"\n", SV_ARG(self->line_text));
+
+    for (size_t i = 0; i < self->start_col; i++) {
+        fputc(' ', stderr);
+    }
+
+    for (size_t i = self->start_col; i < self->col; i++) {
+        fputc('^', stderr);
+    }
+
+    fputc('\n', stderr);
+
+    va_end(args);
 }

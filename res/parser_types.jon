@@ -1,0 +1,5 @@
+let i: int = 0;
+let f: float = 0.0;
+let b: bool = false;
+let b: bool = true;
+let c: char = '/';

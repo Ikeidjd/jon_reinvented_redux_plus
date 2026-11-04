@@ -5,26 +5,32 @@
 #include "print_utils.h"
 #include "segment_array.h"
 #include "token.h"
+#include "type.h"
 
 // IMPORTANT: the types are below the unions to make pointer casting easy
 // DO NOT REARRANGE
 // I don't know how well this works with strict aliasing, but that's okay, because I have it disabled
 
+typedef struct ExprNode ExprNode;
+typedef struct DeclNode DeclNode;
+typedef struct TypeNode TypeNode;
+
 typedef enum {
-    EXPR_INT,
-    EXPR_VAR,
-    EXPR_BIN_OP,
-} NodeExprType;
-
-typedef struct NodeExpr NodeExpr;
-
-typedef struct {
-    Token token;
-} NodeInt;
+    EXPR_NODE_INT,
+    EXPR_NODE_FLOAT,
+    EXPR_NODE_BOOL,
+    EXPR_NODE_CHAR,
+    EXPR_NODE_VAR,
+    EXPR_NODE_BIN_OP,
+} ExprNodeType;
 
 typedef struct {
     Token token;
-} NodeVar;
+} LiteralNode;
+
+typedef struct {
+    Token token;
+} VarNode;
 
 typedef enum {
     BIN_ADD,
@@ -38,58 +44,80 @@ typedef enum {
 typedef struct {
     BinOpType type;
     Token token;
-    NodeExpr* left;
-    NodeExpr* right;
-} NodeBinOp;
+    ExprNode* left;
+    ExprNode* right;
+} BinOpNode;
 
-struct NodeExpr {
+struct ExprNode {
     union {
-        NodeInt integer;
-        NodeVar var;
-        NodeBinOp bin_op;
+        LiteralNode literal;
+        VarNode var;
+        BinOpNode bin_op;
     } as;
-    NodeExprType type;
+    ExprNodeType type;
 };
 
 typedef enum {
-    DECL_VAR,
-} NodeDeclType;
+    DECL_NODE_VAR,
+} DeclNodeType;
 
 typedef struct {
     Token var_name;
     Token equals_sign; // For debug information
-    NodeExpr* expr;
-} NodeVarDecl;
+    TypeNode* type;
+    ExprNode* expr;
+} VarDeclNode;
+
+struct DeclNode {
+    union {
+        VarDeclNode var_decl;
+    } as;
+    DeclNodeType type;
+};
+
+typedef enum {
+    TYPE_NODE_BASIC,
+} TypeNodeType;
 
 typedef struct {
+    BasicType type;
+} BasicTypeNode;
+
+struct TypeNode {
     union {
-        NodeVarDecl var_decl;
+        BasicTypeNode basic_type;
     } as;
-    NodeDeclType type;
-} NodeDecl;
+    TypeNodeType type;
+};
 
 typedef enum {
     NODE_EXPR,
     NODE_DECL,
+    NODE_TYPE,
 } NodeType;
 
 typedef struct {
     union {
-        NodeExpr expr;
-        NodeDecl decl;
+        ExprNode expr;
+        DeclNode decl;
+        TypeNode type;
     } as;
     NodeType type;
 } Node;
 
 typedef DynamicArray(Node*) Program;
 
-void node_expr_fprintln(FILE* file, const NodeExpr* node_expr);
+void expr_node_fprintln(FILE* file, const ExprNode* expr_node);
 
-PRINTLN_GEN(const NodeExpr*, node_expr)
+PRINTLN_GEN(const ExprNode*, expr_node)
 
-void node_decl_fprintln(FILE* file, const NodeDecl* node_decl);
+void decl_node_fprintln(FILE* file, const DeclNode* decl_node);
 
-PRINTLN_GEN(const NodeDecl*, node_decl)
+PRINTLN_GEN(const DeclNode*, decl_node)
+
+void type_node_fprintln(FILE* file, const TypeNode* type_node);
+
+PRINTLN_GEN(const TypeNode*, type_node)
 
 void node_fprintln(FILE* file, const Node* node);
 

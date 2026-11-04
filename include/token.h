@@ -5,6 +5,8 @@
 
 typedef enum {
     TT_INT,
+    TT_FLOAT,
+    TT_CHAR,
 
     TT_PLUS,
     TT_MINUS,
@@ -18,7 +20,15 @@ typedef enum {
     TT_SEMI,
 
     TT_ID,
+
     TT_KW_LET,
+
+    TT_KW_INT,
+    TT_KW_FLOAT,
+    TT_KW_BOOL,
+    TT_KW_TRUE,
+    TT_KW_FALSE,
+    TT_KW_CHAR,
 
     TT_EOF,
 } TokenType;
@@ -26,6 +36,8 @@ typedef enum {
 const char* tt_repr(TokenType tt);
 
 const char* tt_error_message_name(TokenType tt);
+
+bool tt_is_keyword(TokenType tt);
 
 typedef struct {
     TokenType type;

@@ -2,7 +2,6 @@
 
 #include <stdbool.h>
 
-#include "dynamic_array.h"
 #include "token.h"
 #include "lexer.h"
 #include "node.h"
@@ -14,9 +13,9 @@ typedef enum {
     PREC_MUL,
 } Precedence;
 
-Precedence prec_from(TokenType tt);
+static Precedence prec_from(TokenType tt);
 
-bool prec_is_left_associative(Precedence prec);
+static bool prec_is_left_associative(Precedence prec);
 
 typedef struct {
     Sega_Node node_buffer;
@@ -24,32 +23,38 @@ typedef struct {
     size_t i;
 } Parser;
 
-void parser_init(Parser* self, Tokens tokens, Sega_Node node_buffer);
+static void parser_init(Parser* self, Tokens tokens, Sega_Node node_buffer);
 
-NodeExpr* parser_new_expr(Parser* self, NodeExpr node);
+static ExprNode* parser_new_expr(Parser* self, ExprNode node);
 
-bool parser_parse(Parser* self, Program* program);
+static DeclNode* parser_new_decl(Parser* self, DeclNode decl);
 
-NodeDecl* parse_decl(Parser* self);
+static TypeNode* parser_new_type(Parser* self, TypeNode type);
 
-NodeExpr* parse_expr(Parser* self);
+static bool parser_parse(Parser* self, Program* program);
 
-NodeExpr* parse_prec(Parser* self, Precedence prev_prec);
+static TypeNode* parse_type(Parser* self);
 
-NodeExpr* parse_prefix_expr(Parser* self);
+static DeclNode* parse_decl(Parser* self);
 
-Token parser_cur(Parser* self);
+static ExprNode* parse_expr(Parser* self);
 
-void parser_advance(Parser* self);
+static ExprNode* parse_prec(Parser* self, Precedence prev_prec);
 
-bool parser_has(Parser* self, TokenType tt);
+static ExprNode* parse_prefix_expr(Parser* self);
 
-bool parser_matches(Parser* self, TokenType tt);
+static Token parser_cur(Parser* self);
 
-bool parser_expect(Parser* self, TokenType tt);
+static void parser_advance(Parser* self);
 
-void parser_error(Parser* self, const char* fmt, ...) __attribute__((format(printf, 2, 3)));
+static bool parser_has(Parser* self, TokenType tt);
 
-void parser_error_expected(Parser* self, StringView expected);
+static bool parser_matches(Parser* self, TokenType tt);
 
-void parser_error_expected_cstr(Parser* self, const char* expected);
+static bool parser_expect(Parser* self, TokenType tt);
+
+static void parser_error(Parser* self, const char* fmt, ...) __attribute__((format(printf, 2, 3)));
+
+static void parser_error_expected(Parser* self, StringView expected);
+
+static void parser_error_expected_cstr(Parser* self, const char* expected);

@@ -94,7 +94,7 @@ int main(int argc, char** argv) {
 
     for (size_t i = 0; i < tokens.length; i++) {
         Token token = tokens.data[i];
-        printf("'"SV_FMT"' (%s aka '%s')\n", SV_ARG(token.text), tt_repr(token.type), tt_error_message_name(token.type));
+        printf("'"SV_FMT"' (%s aka %s)\n", SV_ARG(token.text), tt_repr(token.type), tt_error_message_name(token.type));
     }
 
     printf("\n");

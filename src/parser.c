@@ -15,7 +15,7 @@ bool parse_program(Tokens tokens, Sega_Node* node_buffer, Program* program) {
     return b;
 }
 
-Precedence prec_from(TokenType tt) {
+static Precedence prec_from(TokenType tt) {
     switch (tt) {
         case TT_EQ:
             return PREC_ASSIGN;
@@ -31,7 +31,7 @@ Precedence prec_from(TokenType tt) {
     }
 }
 
-bool prec_is_left_associative(Precedence prec) {
+static bool prec_is_left_associative(Precedence prec) {
     switch (prec) {
         case PREC_NONE:
         case PREC_ADD:
@@ -44,7 +44,7 @@ bool prec_is_left_associative(Precedence prec) {
     return true;
 }
 
-void parser_init(Parser* self, Tokens tokens, Sega_Node node_buffer) {
+static void parser_init(Parser* self, Tokens tokens, Sega_Node node_buffer) {
     *self = (Parser) {
         .node_buffer = node_buffer,
         .tokens = tokens,
@@ -52,7 +52,7 @@ void parser_init(Parser* self, Tokens tokens, Sega_Node node_buffer) {
     };
 }
 
-NodeExpr* parser_new_expr(Parser* self, NodeExpr expr) {
+static ExprNode* parser_new_expr(Parser* self, ExprNode expr) {
     Node node = {
         .type = NODE_EXPR,
         .as.expr = expr,
@@ -62,7 +62,7 @@ NodeExpr* parser_new_expr(Parser* self, NodeExpr expr) {
     return &sega_get_ptr(&self->node_buffer, sega_length(self->node_buffer) - 1)->as.expr;
 }
 
-NodeDecl* parser_new_decl(Parser* self, NodeDecl decl) {
+static DeclNode* parser_new_decl(Parser* self, DeclNode decl) {
     Node node = {
         .type = NODE_DECL,
         .as.decl = decl,
@@ -72,7 +72,17 @@ NodeDecl* parser_new_decl(Parser* self, NodeDecl decl) {
     return &sega_get_ptr(&self->node_buffer, sega_length(self->node_buffer) - 1)->as.decl;
 }
 
-bool parser_parse(Parser* self, Program* program) {
+static TypeNode* parser_new_type(Parser* self, TypeNode type) {
+    Node node = {
+        .type = NODE_TYPE,
+        .as.type = type,
+    };
+
+    sega_append(&self->node_buffer, node);
+    return &sega_get_ptr(&self->node_buffer, sega_length(self->node_buffer) - 1)->as.type;
+}
+
+static bool parser_parse(Parser* self, Program* program) {
     bool success = true;
 
     while (!parser_matches(self, TT_EOF)) {
@@ -102,38 +112,76 @@ bool parser_parse(Parser* self, Program* program) {
     return success;
 }
 
-NodeDecl* parse_decl(Parser* self) {
+static TypeNode* parse_type(Parser* self) {
+    BasicType type;
+    switch (parser_cur(self).type) {
+        case TT_KW_INT: {
+            type = BASIC_TYPE_INT;
+        } break;
+        case TT_KW_FLOAT: {
+            type = BASIC_TYPE_FLOAT;
+        } break;
+        case TT_KW_BOOL: {
+            type = BASIC_TYPE_BOOL;
+        } break;
+        case TT_KW_CHAR: {
+            type = BASIC_TYPE_CHAR;
+        } break;
+        default: {
+            parser_error_expected_cstr(self, "type name");
+            return NULL;
+        } break;
+    }
+    
+    parser_advance(self);
+
+    return parser_new_type(self, (TypeNode) {
+        .type = TYPE_NODE_BASIC,
+        .as.basic_type = {
+            .type = type,
+        },
+    });
+}
+
+static DeclNode* parse_decl(Parser* self) {
     if (!parser_expect(self, TT_KW_LET)) return NULL;
 
     Token var_name = parser_cur(self);
     if (!parser_expect(self, TT_ID)) return NULL;
 
+    TypeNode* type = NULL;
+    if (parser_matches(self, TT_COLON)) {
+        type = parse_type(self);
+        if (type == NULL) return NULL;
+    }
+
     Token equals_sign = parser_cur(self);
     if (!parser_expect(self, TT_EQ)) return NULL;
 
-    NodeExpr* expr = parse_expr(self);
+    ExprNode* expr = parse_expr(self);
     if (!expr) return NULL;
 
     if (!parser_expect(self, TT_SEMI)) return NULL;
 
-    return parser_new_decl(self, (NodeDecl) {
-        .type = DECL_VAR,
+    return parser_new_decl(self, (DeclNode) {
+        .type = DECL_NODE_VAR,
         .as.var_decl = {
             .var_name = var_name,
+            .type = type,
             .equals_sign = equals_sign,
             .expr = expr,
         },
     });
 }
 
-NodeExpr* parse_expr(Parser* self) {
+static ExprNode* parse_expr(Parser* self) {
     return parse_prec(self, PREC_NONE);
 }
 
-NodeExpr* parse_prec(Parser* self, Precedence prev_prec) {
+static ExprNode* parse_prec(Parser* self, Precedence prev_prec) {
     if (prec_is_left_associative(prev_prec)) prev_prec++;
 
-    NodeExpr* lhs = parse_prefix_expr(self);
+    ExprNode* lhs = parse_prefix_expr(self);
     if (!lhs) return NULL;
 
     Precedence next_prec;
@@ -141,7 +189,7 @@ NodeExpr* parse_prec(Parser* self, Precedence prev_prec) {
         Token op = parser_cur(self);
         parser_advance(self);
 
-        NodeExpr* rhs = parse_prec(self, next_prec);
+        ExprNode* rhs = parse_prec(self, next_prec);
         if (!rhs) return NULL;
 
         BinOpType op_type;
@@ -170,8 +218,8 @@ NodeExpr* parse_prec(Parser* self, Precedence prev_prec) {
             } break;
         }
 
-        lhs = parser_new_expr(self, (NodeExpr) {
-            .type = EXPR_BIN_OP,
+        lhs = parser_new_expr(self, (ExprNode) {
+            .type = EXPR_NODE_BIN_OP,
             .as.bin_op = {
                 .type = op_type,
                 .token = op,
@@ -184,15 +232,27 @@ NodeExpr* parse_prec(Parser* self, Precedence prev_prec) {
     return lhs;
 }
 
-NodeExpr* parse_prefix_expr(Parser* self) {
+static ExprNode* parse_prefix_expr(Parser* self) {
+    static const ExprNodeType literals[] = {
+        [TT_INT] = EXPR_NODE_INT,
+        [TT_FLOAT] = EXPR_NODE_FLOAT,
+        [TT_KW_TRUE] = EXPR_NODE_BOOL,
+        [TT_KW_FALSE] = EXPR_NODE_BOOL,
+        [TT_CHAR] = EXPR_NODE_CHAR,
+    };
+
     switch (parser_cur(self).type) {
-        case TT_INT: {
+        case TT_INT:
+        case TT_FLOAT:
+        case TT_KW_TRUE:
+        case TT_KW_FALSE:
+        case TT_CHAR: {
             Token token = parser_cur(self);
             parser_advance(self);
 
-            return parser_new_expr(self, (NodeExpr) {
-                .type = EXPR_INT,
-                .as.integer = {
+            return parser_new_expr(self, (ExprNode) {
+                .type = literals[token.type],
+                .as.literal = {
                     .token = token,
                 },
             });
@@ -201,8 +261,8 @@ NodeExpr* parse_prefix_expr(Parser* self) {
             Token token = parser_cur(self);
             parser_advance(self);
 
-            return parser_new_expr(self, (NodeExpr) {
-                .type = EXPR_VAR,
+            return parser_new_expr(self, (ExprNode) {
+                .type = EXPR_NODE_VAR,
                 .as.var = {
                     .token = token,
                 },
@@ -215,19 +275,19 @@ NodeExpr* parse_prefix_expr(Parser* self) {
     }
 }
 
-Token parser_cur(Parser* self) {
+static Token parser_cur(Parser* self) {
     return self->tokens.data[self->i];
 }
 
-void parser_advance(Parser* self) {
+static void parser_advance(Parser* self) {
     if (parser_cur(self).type != TT_EOF) self->i++;
 }
 
-bool parser_has(Parser* self, TokenType tt) {
+static bool parser_has(Parser* self, TokenType tt) {
     return parser_cur(self).type == tt;
 }
 
-bool parser_matches(Parser* self, TokenType tt) {
+static bool parser_matches(Parser* self, TokenType tt) {
     if (parser_has(self, tt)) {
         parser_advance(self);
         return true;
@@ -236,7 +296,7 @@ bool parser_matches(Parser* self, TokenType tt) {
     return false;
 }
 
-bool parser_expect(Parser* self, TokenType tt) {
+static bool parser_expect(Parser* self, TokenType tt) {
     if (!parser_matches(self, tt)) {
         parser_error_expected_cstr(self, tt_error_message_name(tt));
         return false;
@@ -245,13 +305,11 @@ bool parser_expect(Parser* self, TokenType tt) {
     return true;
 }
 
-void parser_error(Parser* self, const char* fmt, ...) {
-    (void) self;
-
+static void parser_error(Parser* self, const char* fmt, ...) {
     va_list args;
     va_start(args, fmt);
 
-    fprintf(stderr, "Syntax error at line %zu: ", parser_cur(self).line_number + 1);
+    fprintf(stderr, "Syntax error on line %zu: ", parser_cur(self).line_number + 1);
     vfprintf(stderr, fmt, args);
     fprintf(stderr, ".\n");
     fprintf(stderr, SV_FMT"\n", SV_ARG(parser_cur(self).line_text));
@@ -269,10 +327,10 @@ void parser_error(Parser* self, const char* fmt, ...) {
     va_end(args);
 }
 
-void parser_error_expected(Parser* self, StringView expected) {
-    parser_error(self, "expected "SV_FMT", but got '"SV_FMT"'", SV_ARG(expected), SV_ARG(parser_cur(self).text));
+static void parser_error_expected(Parser* self, StringView expected) {
+    parser_error(self, "expected "SV_FMT", but got %s'"SV_FMT"'", SV_ARG(expected), tt_is_keyword(parser_cur(self).type) ? "keyword " : "", SV_ARG(parser_cur(self).text));
 }
 
-void parser_error_expected_cstr(Parser* self, const char* expected) {
-    parser_error(self, "expected %s, but got '"SV_FMT"'", expected, SV_ARG(parser_cur(self).text));
+static void parser_error_expected_cstr(Parser* self, const char* expected) {
+    parser_error(self, "expected %s, but got %s'"SV_FMT"'", expected, tt_is_keyword(parser_cur(self).type) ? "keyword " : "", SV_ARG(parser_cur(self).text));
 }
