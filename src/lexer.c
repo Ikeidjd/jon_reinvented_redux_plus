@@ -1,6 +1,22 @@
 #include "lexer.h"
+#include "lexer_internals.h"
+
+#include <stdio.h>
 
 #include "char_utils.h"
+
+bool lex_program(StringView src, Tokens* token_buf) {
+    Lexer self;
+    lexer_init(&self, src);
+
+    Token token;
+    while (lexer_next(&self, &token)) {
+        dyna_append(token_buf, token);
+        if (token.type == TT_EOF) return true;
+    }
+
+    return false;
+}
 
 void lexer_init(Lexer* self, StringView src) {
     *self = (Lexer) {
@@ -40,6 +56,7 @@ bool lexer_next(Lexer* self, Token* out) {
                 tt = TT_INT;
                 lexer_skip_int(self);
             } else {
+                fprintf(stderr, "Syntax error at line %zu, pos %zu: invalid character '%c'.\n", self->start_line, self->start_col, c);
                 return false;
             }
         } break;

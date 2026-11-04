@@ -35,10 +35,10 @@ void sega_get_indices(size_t index, size_t* index_of_segment, size_t* index_in_s
     *index_in_segment = index + 1 - (1 << *index_of_segment);
 }
 
-void _sega_destroy(const _SegmentArray* sega) {
+void _sega_destroy(_SegmentArray* sega) {
     for (size_t i = 0; i < sega->segments.length; i++) {
         free(sega->segments.data[i].data);
     }
 
-    free(sega->segments.data);
+    dyna_destroy(sega->segments);
 }

@@ -2,6 +2,8 @@
 
 #include <stddef.h>
 
+#include "dynamic_array.h"
+
 // Inspired by https://danielchasehooper.com/posts/segment_array/
 typedef struct {
     void* data;
@@ -9,13 +11,7 @@ typedef struct {
 } SegaSegment;
 
 typedef struct {
-    SegaSegment* data;
-    size_t capacity;
-    size_t length;
-} SegaSegments;
-
-typedef struct {
-    SegaSegments segments;
+    DynamicArray(SegaSegment) segments;
     size_t length_of_active;
     size_t total_length;
 } _SegmentArray;
@@ -37,7 +33,7 @@ void* _sega_get(_SegmentArray* sega, size_t index, size_t elem_size);
 
 void sega_get_indices(size_t index, size_t* index_of_segment, size_t* index_in_segment);
 
-void _sega_destroy(const _SegmentArray* sega);
+void _sega_destroy(_SegmentArray* sega);
 
 #define sega_init(sega) _sega_init(&(sega)->_sega, sizeof(*(sega)->_type_info))
 

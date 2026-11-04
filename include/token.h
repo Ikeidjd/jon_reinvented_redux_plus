@@ -1,6 +1,7 @@
 #pragma once
 
 #include "string_view.h"
+#include "dynamic_array.h"
 
 typedef enum {
     TT_INT,
@@ -23,3 +24,5 @@ typedef struct {
     size_t start_col;
     size_t end_col;
 } Token;
+
+typedef DynamicArray(Token) Tokens;

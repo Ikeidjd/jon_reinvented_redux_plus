@@ -87,30 +87,30 @@ int main(int argc, char** argv) {
 
     StringView src = sv_new(src_cstr, length);
 
-    Lexer lexer;
-    lexer_init(&lexer, src);
+    Tokens tokens;
+    dyna_init(&tokens);
 
-    Token token;
-    while (lexer_next(&lexer, &token)) {
+    if (!lex_program(src, &tokens)) return -1;
+
+    for (size_t i = 0; i < tokens.length; i++) {
+        Token token = tokens.data[i];
         printf("'"SV_FMT"' (%s aka '%s')\n", SV_ARG(token.text), tt_repr(token.type), tt_str(token.type));
-        if (token.type == TT_EOF) break;
     }
 
     printf("\n");
 
-    Parser parser;
-    parser_init(&parser, src);
+    Sega_Node nodes;
+    sega_init(&nodes);
 
-    Sega_Node sega_node;
-    sega_init(&sega_node);
-
-    Node* ast = parser_parse(&parser, &sega_node);
+    Node* ast = parse_program(tokens, &nodes);
 
     if (!ast) return -1;
 
+    dyna_destroy(tokens);
+
     node_println(ast);
 
-    sega_destroy(sega_node);
+    sega_destroy(nodes);
     file_unread(src_cstr);
     return 0;
 }
