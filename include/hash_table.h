@@ -17,7 +17,7 @@ typedef struct {
 
 typedef struct {
     HashTableBucket* data;
-    size_t length;
+    size_t occupied;
     size_t capacity;
     HashFn hash_fn;
     EqFn eq_fn;
