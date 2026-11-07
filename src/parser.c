@@ -148,9 +148,15 @@ static TypeNode* parse_type(Parser* self) {
 
 static DeclNode* parse_decl(Parser* self) {
     bool mutable;
-    if (parser_expect(self, TT_KW_LET)) mutable = false;
-    else if (parser_expect(self, TT_KW_MUT)) mutable = true;
-    else return NULL;
+    if (parser_matches(self, TT_KW_LET)) {
+        mutable = false;
+    } else if (parser_matches(self, TT_KW_MUT)) {
+        mutable = true;
+    } else {
+        // I don't think this can happen
+        parser_error_expected_cstr(self, "keyword 'let' or keyword 'mut'");
+        return NULL;
+    }
 
     Token var_name = parser_cur(self);
     if (!parser_expect(self, TT_ID)) return NULL;
@@ -199,6 +205,19 @@ static ExprNode* parse_prec(Parser* self, Precedence prev_prec) {
         ExprNode* rhs = parse_prec(self, next_prec);
         if (!rhs) return NULL;
 
+        if (op.type == TT_EQ) {
+            lhs = parser_new_expr(self, (ExprNode) {
+                .type = EXPR_NODE_ASSIGNMENT,
+                .as.assignment = {
+                    .token = op,
+                    .left = lhs,
+                    .right = rhs,
+                }
+            });
+
+            continue;
+        }
+
         BinOpType op_type;
         switch (op.type) {
             case TT_PLUS: {
@@ -215,9 +234,6 @@ static ExprNode* parse_prec(Parser* self, Precedence prev_prec) {
             } break;
             case TT_MOD: {
                 op_type = BIN_MOD;
-            } break;
-            case TT_EQ: {
-                op_type = BIN_ASSIGN;
             } break;
             default: {
                 fprintf(stderr, "Invalid binary operator '"SV_FMT"'. This should never happen.\n", SV_ARG(op.text));
@@ -240,30 +256,71 @@ static ExprNode* parse_prec(Parser* self, Precedence prev_prec) {
 }
 
 static ExprNode* parse_prefix_expr(Parser* self) {
-    static const ExprNodeType literals[] = {
-        [TT_INT] = EXPR_NODE_INT,
-        [TT_FLOAT] = EXPR_NODE_FLOAT,
-        [TT_KW_TRUE] = EXPR_NODE_BOOL,
-        [TT_KW_FALSE] = EXPR_NODE_BOOL,
-        [TT_CHAR] = EXPR_NODE_CHAR,
-    };
-
     switch (parser_cur(self).type) {
-        case TT_INT:
-        case TT_FLOAT:
+        case TT_INT: {
+            Token token = parser_cur(self);
+
+            i64 i;
+            if (!sv_to_i64(token.text, &i)) {
+                parser_error(self, "integer "SV_FMT" too large to fit in range", SV_ARG(token.text));
+                return NULL;
+            }
+
+            parser_advance(self);
+            printf("BBBB\n"I64_FMT"\n", i);
+
+            return parser_new_expr(self, (ExprNode) {
+                .type = EXPR_NODE_INT,
+                .as.literal = {
+                    .token = token,
+                    .as.integer = i,
+                },
+            });
+        }
+        case TT_FLOAT: {
+            Token token = parser_cur(self);
+
+            f64 d;
+            if (!sv_to_f64(token.text, &d)) {
+                parser_error(self, "could not parse float "SV_FMT"", SV_ARG(token.text));
+                return NULL;
+            }
+
+            parser_advance(self);
+
+            return parser_new_expr(self, (ExprNode) {
+                .type = EXPR_NODE_FLOAT,
+                .as.literal = {
+                    .token = token,
+                    .as.floating = d,
+                },
+            });
+        }
         case TT_KW_TRUE:
-        case TT_KW_FALSE:
+        case TT_KW_FALSE: {
+            Token token = parser_cur(self);
+            parser_advance(self);
+
+            return parser_new_expr(self, (ExprNode) {
+                .type = EXPR_NODE_BOOL,
+                .as.literal = {
+                    .token = token,
+                    .as.boolean = token.type == TT_KW_TRUE,
+                },
+            });
+        }
         case TT_CHAR: {
             Token token = parser_cur(self);
             parser_advance(self);
 
             return parser_new_expr(self, (ExprNode) {
-                .type = literals[token.type],
+                .type = EXPR_NODE_CHAR,
                 .as.literal = {
                     .token = token,
+                    .as.character = token.text.data[1], // The text includes the quotes, so indexing with 1 is necessary to get the character
                 },
             });
-        } break;
+        }
         case TT_ID: {
             Token token = parser_cur(self);
             parser_advance(self);
@@ -274,11 +331,11 @@ static ExprNode* parse_prefix_expr(Parser* self) {
                     .token = token,
                 },
             });
-        } break;
+        }
         default: {
             parser_error_expected_cstr(self, "expression");
             return NULL;
-        } break;
+        }
     }
 }
 

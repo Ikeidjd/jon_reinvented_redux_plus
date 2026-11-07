@@ -11,6 +11,7 @@
 #include "lexer.h"
 #include "parser_.h"
 #include "semantic_analyzer.h"
+#include "compiler.h"
 
 static void dyna_test(void) {
     struct {
@@ -130,6 +131,9 @@ int main(int argc, char** argv) {
     printf("SEMANTIC ANALYZER START\n");
     program_println(program);
     printf("SEMANTIC ANALYZER END\n\n");
+
+    Chunk chunk = compile_program(program);
+    chunk_disassemble(chunk);
 
     End:
     type_arena_destroy(&arena);

@@ -1,12 +1,11 @@
 #pragma once
 
-#include <stdbool.h>
-#include <stdint.h>
+#include "typedef_utils.h"
 
 // Forward declaration to avoid circular include
 typedef struct Type Type;
 
-typedef uint64_t hash_t;
+typedef u64 hash_t;
 typedef hash_t (*HashFn)(Type* type);
 typedef bool (*EqFn)(Type* a, Type* b);
 

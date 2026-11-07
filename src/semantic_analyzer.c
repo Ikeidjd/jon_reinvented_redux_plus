@@ -11,7 +11,12 @@ bool analyze_program(Program* program, TypeArena* arena) {
     bool success = true;
 
     for (size_t i = 0; i < program->length; i++) {
-        if (!analyze_node(&self, program->data[i])) success = false;
+        if (!analyze_node(&self, program->data[i])) {
+            success = false;
+            printf("\n\n");
+            node_println(program->data[i]);
+            printf("\n\n");
+        }
     }
 
     *arena = self.arena;
@@ -42,11 +47,12 @@ static void sema_add_var(SemanticAnalyzer* self, StringView name, TypeAndMutabil
     dyna_append(&self->vars.vars, var);
 }
 
-static bool sema_get_var(SemanticAnalyzer* self, StringView name, Var* out) {
+static bool sema_get_var(SemanticAnalyzer* self, StringView name, size_t* out_index, Var* out) {
     for (size_t i = self->vars.vars.length; i--;) {
         Var var = self->vars.vars.data[i];
 
         if (sv_eq(name, var.name)) {
+            *out_index = i;
             *out = var;
             return true;
         }
@@ -134,23 +140,20 @@ static bool analyze_expr(SemanticAnalyzer* self, ExprNode* expr, TypeAndMutabili
             return true;
         }
         case EXPR_NODE_VAR: {
+            size_t index;
             Var var;
-            if (!sema_get_var(self, expr->as.var.token.text, &var)) {
+            if (!sema_get_var(self, expr->as.var.token.text, &index, &var)) {
                 sema_error_undeclared_variable(self, expr->as.var.token);
                 return false;
             }
 
+            expr->as.var.stack_index = index;
             *out = var.type;
             return true;
         }
         case EXPR_NODE_BIN_OP: {
             TypeAndMutability left;
             if (!analyze_expr(self, expr->as.bin_op.left, &left)) return false;
-
-            if (expr->as.bin_op.type == BIN_ASSIGN && !left.mutable) {
-                sema_error_assign_to_immutable(self, expr->as.bin_op.token);
-                return false;
-            }
 
             TypeAndMutability right;
             if (!analyze_expr(self, expr->as.bin_op.right, &right)) return false;
@@ -161,7 +164,27 @@ static bool analyze_expr(SemanticAnalyzer* self, ExprNode* expr, TypeAndMutabili
             }
 
             *out = left;
-            return false;
+            return true;
+        }
+        case EXPR_NODE_ASSIGNMENT: {
+            TypeAndMutability left;
+            if (!analyze_expr(self, expr->as.assignment.left, &left)) return false;
+
+            if (!left.mutable) {
+                sema_error_assign_to_immutable(self, expr->as.assignment.token);
+                return false;
+            }
+
+            TypeAndMutability right;
+            if (!analyze_expr(self, expr->as.assignment.right, &right)) return false;
+
+            if (left.type != right.type) {
+                sema_error_incompatible_types(self, expr->as.assignment.token, left.type, right.type);
+                return false;
+            }
+
+            *out = left;
+            return true;
         }
     }
 
@@ -191,7 +214,9 @@ static bool analyze_decl(SemanticAnalyzer* self, DeclNode* decl) {
                 .type = expr_type.type,
                 .mutable = decl->as.var_decl.mutable,
             });
-        } break;
+
+            return true;
+        }
     }
 
     return false;
@@ -206,5 +231,5 @@ static Type* analyze_type(SemanticAnalyzer* self, TypeNode* type) {
         }
     }
 
-    return false;
+    return NULL;
 }

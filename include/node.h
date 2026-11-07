@@ -22,14 +22,22 @@ typedef enum {
     EXPR_NODE_CHAR,
     EXPR_NODE_VAR,
     EXPR_NODE_BIN_OP,
+    EXPR_NODE_ASSIGNMENT,
 } ExprNodeType;
 
 typedef struct {
     Token token;
+    union {
+        i64 integer;
+        f64 floating;
+        bool boolean;
+        char character;
+    } as;
 } LiteralNode;
 
 typedef struct {
     Token token;
+    size_t stack_index;
 } VarNode;
 
 typedef enum {
@@ -38,7 +46,6 @@ typedef enum {
     BIN_MUL,
     BIN_DIV,
     BIN_MOD,
-    BIN_ASSIGN,
 } BinOpType;
 
 typedef struct {
@@ -48,11 +55,18 @@ typedef struct {
     ExprNode* right;
 } BinOpNode;
 
+typedef struct {
+    Token token;
+    ExprNode* left;
+    ExprNode* right;
+} AssignmentNode;
+
 struct ExprNode {
     union {
         LiteralNode literal;
         VarNode var;
         BinOpNode bin_op;
+        AssignmentNode assignment;
     } as;
     ExprNodeType type;
 };

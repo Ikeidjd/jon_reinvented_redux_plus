@@ -1,6 +1,7 @@
 #include "string_view.h"
 
-#include <limits.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "char_utils.h"
@@ -84,21 +85,45 @@ bool sv_eq_cstr(StringView sv, const char* cstr) {
     return cstr[sv.length] == '\0';
 }
 
-bool sv_to_int(StringView sv, int* out) {
+bool sv_to_i64(StringView sv, i64* out) {
+    static const u64 MAX = 9223372036854775807ULL;
+
     bool negative = sv.data[0] == '-';
     if (negative) sv = sv_slice_from(sv, 1);
 
-    long long n = 0;
+    u64 n = 0;
 
     for (size_t i = 0; i < sv.length; i++) {
         if (sv.data[i] < '0' || sv.data[i] > '9') return false;
 
         n *= 10;
-        n += (negative ? -1 : 1) * (sv.data[i] - '0');
+        n += sv.data[i] - '0';
 
-        if (n < INT_MIN || n > INT_MAX) return false;
+        if (n > MAX || (negative && n > MAX + 1)) return false;
     }
 
-    *out = (int) n;
+    // Trying to be very careful about signed integer overflow (undefined behavior)
+    if (negative && n == MAX + 1) {
+        *out = -MAX - 1;
+    } else {
+        *out = (i64) n;
+        if (negative) *out = -*out;
+    }
+
+    printf("AAAA\n"I64_FMT"\n", *out);
+    return true;
+}
+
+bool sv_to_f64(StringView sv, f64* out) {
+    char buf[sv.length + 1];
+    memcpy(buf, sv.data, sv.length);
+    buf[sv.length] = '\0';
+
+    char* end_ptr;
+    double d = strtod(buf, &end_ptr);
+
+    if (end_ptr != buf + sv.length) return false;
+
+    *out = d;
     return true;
 }

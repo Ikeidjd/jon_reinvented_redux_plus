@@ -36,6 +36,11 @@ static void expr_node_fprintln_indent(FILE* file, const ExprNode* expr_node, siz
             expr_node_fprintln_indent(file, expr_node->as.bin_op.left, indent);
             expr_node_fprintln_indent(file, expr_node->as.bin_op.right, indent);
         } break;
+        case EXPR_NODE_ASSIGNMENT: {
+            fprintf(file, "Assignment:\n");
+            expr_node_fprintln_indent(file, expr_node->as.assignment.left, indent);
+            expr_node_fprintln_indent(file, expr_node->as.assignment.right, indent);
+        } break;
     }
 }
 

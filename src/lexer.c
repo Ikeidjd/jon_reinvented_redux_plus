@@ -166,6 +166,7 @@ static void lexer_skip_whitespace(Lexer* self) {
 
         if (c == '#') {
             while (lexer_advance(self) != '\n');
+            continue;
         }
 
         break;

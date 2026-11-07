@@ -1,0 +1,186 @@
+#include "bytecode.h"
+
+#include <stdio.h>
+
+const char* opcode_to_string(Opcode opcode) {
+    switch (opcode) {
+        case OP_ADD:
+            return "OP_ADD";
+        case OP_SUB:
+            return "OP_SUB";
+        case OP_MUL:
+            return "OP_MUL";
+        case OP_DIV:
+            return "OP_DIV";
+        case OP_MOD:
+            return "OP_MOD";
+        case OP_LOAD_INT:
+            return "OP_LOAD_INT";
+        case OP_LOAD_FLOAT:
+            return "OP_LOAD_FLOAT";
+        case OP_LOAD_BOOL:
+            return "OP_LOAD_BOOL";
+        case OP_LOAD_CHAR:
+            return "OP_LOAD_CHAR";
+        case OP_GET_LOCAL:
+            return "OP_GET_LOCAL";
+        case OP_SET_LOCAL:
+            return "OP_SET_LOCAL";
+        case OP_POP:
+            return "OP_POP";
+    }
+
+    return "";
+}
+
+void chunk_emit(Chunk* self, Opcode opcode) {
+    dyna_append(self, opcode);
+}
+
+void chunk_emit_args(Chunk* self, Opcode opcode, size_t n, u8 args[n]) {
+    chunk_emit(self, opcode);
+
+    for (size_t i = 0; i < n; i++) {
+        dyna_append(self, args[i]);
+    }
+}
+
+#define MAKE_TO_LE(type) \
+static void to_le_ ## type(type integer, u8 buf[sizeof(integer)]) { \
+    for (size_t i = 0; i < sizeof(integer); i++) { \
+        buf[i] = (integer >> (i * 8)) & 0xFF; \
+    } \
+}
+
+MAKE_TO_LE(u64)
+MAKE_TO_LE(u32)
+MAKE_TO_LE(u16)
+
+static void to_le_f64(f64 f, u8 buf[8]) {
+    to_le_u64(*(u64*) &f, buf);
+}
+
+void chunk_emit_load_int(Chunk* self, i64 i) {
+    u8 buf[sizeof(i)];
+    to_le_u64((u64) i, buf);
+    chunk_emit_args(self, OP_LOAD_INT, sizeof(i), buf);
+}
+
+void chunk_emit_load_float(Chunk* self, f64 f) {
+    u8 buf[sizeof(f)];
+    to_le_f64(f, buf);
+    chunk_emit_args(self, OP_LOAD_FLOAT, sizeof(f), buf);
+}
+
+void chunk_emit_load_bool(Chunk* self, bool b) {
+    chunk_emit_args(self, OP_LOAD_BOOL, sizeof(b), (u8*) &b);
+}
+
+void chunk_emit_load_char(Chunk* self, char c) {
+    chunk_emit_args(self, OP_LOAD_CHAR, sizeof(c), (u8*) &c);
+}
+
+void chunk_emit_get_local(Chunk* self, u16 index) {
+    u8 buf[sizeof(index)];
+    to_le_u16(index, buf);
+    chunk_emit_args(self, OP_GET_LOCAL, sizeof(index), buf);
+}
+
+void chunk_emit_set_local(Chunk* self, u16 index) {
+    u8 buf[sizeof(index)];
+    to_le_u16(index, buf);
+    chunk_emit_args(self, OP_SET_LOCAL, sizeof(index), buf);
+}
+
+static void chunk_disassemble_simple(Chunk self, size_t* offset) {
+    printf("%s", opcode_to_string(self.data[*offset]));
+    *offset += 1;
+}
+
+static u8 chunk_get_u8(Chunk self, size_t offset) {
+    return self.data[offset];
+}
+
+// It's very important to cast to (type) before bitshifting to avoid weird wrap-arounds with u64 (this threw me off for a while)
+#define MAKE_CHUNK_GET_LE(type) \
+static type chunk_get_le_ ## type(Chunk self, size_t offset) { \
+    type integer = 0; \
+\
+    for (size_t i = 0; i < sizeof(integer); i++) { \
+        if (i + offset >= self.length) { \
+            fprintf(stderr, "Reached the end of chunk unexpectedly.\n"); \
+            exit(-1); \
+        } \
+\
+        integer |= (type) self.data[i + offset] << (i * 8); \
+    } \
+\
+    return integer; \
+}
+
+MAKE_CHUNK_GET_LE(u64)
+MAKE_CHUNK_GET_LE(u32)
+MAKE_CHUNK_GET_LE(u16)
+
+#define MAKE_CHUNK_DISASSEMBLE_LE(type, fmt) \
+static void chunk_disassemble_le_ ## type(Chunk self, size_t* offset) { \
+    type integer = chunk_get_le_ ## type(self, *offset); \
+\
+    printf(fmt, integer); \
+    *offset += sizeof(integer); \
+}
+
+MAKE_CHUNK_DISASSEMBLE_LE(u64, U64_FMT)
+MAKE_CHUNK_DISASSEMBLE_LE(u32, U32_FMT)
+MAKE_CHUNK_DISASSEMBLE_LE(u16, U16_FMT)
+
+static void chunk_disassemble_le_f64(Chunk self, size_t* offset) {
+    u64 integer = chunk_get_le_u64(self, *offset);
+    f64 f = *(f64*) &integer;
+
+    printf("%f", f);
+    *offset += sizeof(f);
+}
+
+void chunk_disassemble(Chunk self) {
+    size_t offset = 0;
+
+    while (offset < self.length) {
+        switch (self.data[offset]) {
+            case OP_ADD:
+            case OP_SUB:
+            case OP_MUL:
+            case OP_DIV:
+            case OP_MOD:
+            case OP_POP: {
+                chunk_disassemble_simple(self, &offset);
+            } break;
+            case OP_LOAD_INT: {
+                chunk_disassemble_simple(self, &offset);
+                printf(" ");
+                chunk_disassemble_le_u64(self, &offset);
+            } break;
+            case OP_LOAD_FLOAT: {
+                chunk_disassemble_simple(self, &offset);
+                printf(" ");
+                chunk_disassemble_le_f64(self, &offset);
+            } break;
+            case OP_LOAD_BOOL: {
+                chunk_disassemble_simple(self, &offset);
+                printf(" %s", chunk_get_u8(self, offset++) ? "true" : "false");
+            } break;
+            case OP_LOAD_CHAR: {
+                chunk_disassemble_simple(self, &offset);
+                printf(" '%c'", chunk_get_u8(self, offset++));
+            } break;
+            case OP_GET_LOCAL:
+            case OP_SET_LOCAL: {
+                chunk_disassemble_simple(self, &offset);
+                printf(" ");
+                chunk_disassemble_le_u16(self, &offset);
+            } break;
+        }
+
+        printf("\n");
+    }
+}

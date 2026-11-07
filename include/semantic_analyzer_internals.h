@@ -30,7 +30,7 @@ static void sema_init(SemanticAnalyzer* self, TypeArena arena);
 
 static void sema_add_var(SemanticAnalyzer* self, StringView name, TypeAndMutability type);
 
-static bool sema_get_var(SemanticAnalyzer* self, StringView name, Var* out);
+static bool sema_get_var(SemanticAnalyzer* self, StringView name, size_t* out_index, Var* out);
 
 static void sema_error(SemanticAnalyzer* self, Token token, const char* fmt, ...) __attribute__((format(printf, 3, 4)));
 
