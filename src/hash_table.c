@@ -17,6 +17,10 @@ void hash_table_init(HashTable_Type* self, HashFn hash_fn, EqFn eq_fn) {
     };
 }
 
+void hash_table_destroy(HashTable_Type* self) {
+    free(self->data);
+}
+
 static HashTableBucket* hash_table_get_bucket(const HashTable_Type* self, Type* type) {
     hash_t hash = self->hash_fn(type);
     hash_t index = hash & (self->capacity - 1);

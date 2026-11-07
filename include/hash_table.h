@@ -25,6 +25,8 @@ typedef struct {
 
 void hash_table_init(HashTable_Type* self, HashFn hash_fn, EqFn eq_fn);
 
+void hash_table_destroy(HashTable_Type* self);
+
 Type* hash_table_get(const HashTable_Type* self, Type* type);
 
 void hash_table_insert(HashTable_Type* self, Type* type);

@@ -52,6 +52,11 @@ void type_arena_init(TypeArena* arena) {
     hash_table_init(&arena->hash_table, type_hash, type_eq);
 }
 
+void type_arena_destroy(TypeArena* arena) {
+    free(arena->buf);
+    hash_table_destroy(&arena->hash_table);
+}
+
 BasicType* basic_type_new(TypeArena* arena, BasicTypeType basic_type) {
     BasicType type = {
         .header = {

@@ -40,5 +40,5 @@ void _sega_destroy(_SegmentArray* sega) {
         free(sega->segments.data[i].data);
     }
 
-    dyna_destroy(sega->segments);
+    dyna_destroy(&sega->segments);
 }

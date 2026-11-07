@@ -4,9 +4,9 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-bool analyze_program(Program* program) {
+bool analyze_program(Program* program, TypeArena* arena) {
     SemanticAnalyzer self;
-    sema_init(&self);
+    sema_init(&self, *arena);
 
     bool success = true;
 
@@ -14,6 +14,8 @@ bool analyze_program(Program* program) {
         if (!analyze_node(&self, program->data[i])) success = false;
     }
 
+    *arena = self.arena;
+    dyna_destroy(&self.vars.vars);
     return success;
 }
 
@@ -24,14 +26,14 @@ static TypeAndMutability from_type(Type* type, bool mutable) {
     };
 }
 
-static void sema_init(SemanticAnalyzer* self) {
-    type_arena_init(&self->arena);
+static void sema_init(SemanticAnalyzer* self, TypeArena arena) {
+    self->arena = arena;
     dyna_init(&self->vars.vars);
     self->vars.depth = 0;
 }
 
 static void sema_add_var(SemanticAnalyzer* self, StringView name, TypeAndMutability type) {
-    Var var = (Var) {
+    Var var = {
         .name = name,
         .type = type,
         .depth = self->vars.depth,

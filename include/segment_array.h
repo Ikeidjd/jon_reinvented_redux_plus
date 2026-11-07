@@ -60,4 +60,4 @@ do { \
 
 #define sega_length(sega) (sega)._sega.total_length
 
-#define sega_destroy(sega) _sega_destroy(&(sega)._sega)
+#define sega_destroy(sega) _sega_destroy(&(sega)->_sega)

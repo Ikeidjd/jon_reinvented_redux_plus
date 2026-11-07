@@ -20,12 +20,13 @@ typedef struct {
     size_t depth;
 } Vars;
 
+// Does not own arena
 typedef struct {
     TypeArena arena;
     Vars vars;
 } SemanticAnalyzer;
 
-static void sema_init(SemanticAnalyzer* self);
+static void sema_init(SemanticAnalyzer* self, TypeArena arena);
 
 static void sema_add_var(SemanticAnalyzer* self, StringView name, TypeAndMutability type);
 

@@ -109,7 +109,7 @@ int main(int argc, char** argv) {
     dyna_init(&program);
 
     bool b = parse_program(tokens, &nodes, &program);
-    dyna_destroy(tokens);
+    dyna_destroy(&tokens);
 
     if (!b) return -1;
 
@@ -117,14 +117,24 @@ int main(int argc, char** argv) {
     program_println(program);
     printf("PARSER END\n\n");
 
-    if (!analyze_program(&program)) return -1;
+    TypeArena arena;
+    type_arena_init(&arena);
+
+    int out = 0;
+
+    if (!analyze_program(&program, &arena)) {
+        out = -1;
+        goto End;
+    }
 
     printf("SEMANTIC ANALYZER START\n");
     program_println(program);
     printf("SEMANTIC ANALYZER END\n\n");
 
-    dyna_destroy(program);
-    sega_destroy(nodes);
+    End:
+    type_arena_destroy(&arena);
+    dyna_destroy(&program);
+    sega_destroy(&nodes);
     file_unread(src_cstr);
-    return 0;
+    return out;
 }

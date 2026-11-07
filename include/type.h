@@ -49,4 +49,6 @@ typedef struct {
 
 void type_arena_init(TypeArena* arena);
 
+void type_arena_destroy(TypeArena* arena);
+
 BasicType* basic_type_new(TypeArena* arena, BasicTypeType basic_type);
