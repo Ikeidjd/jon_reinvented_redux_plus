@@ -33,13 +33,53 @@ Type* hash_table_get(const HashTable_Type* self, Type* type) {
     return bucket->type;
 }
 
+static void hash_table_set_no_resize(HashTable_Type* self, HashTableBucket* bucket, Type* type) {
+    bucket->type = type;
+    self->length++;
+}
+
+static void hash_table_resize(HashTable_Type* self) {
+    HashTableBucket* old_data = self->data;
+    size_t old_capacity = self->capacity;
+
+    self->capacity *= 2;
+    self->data = malloc(self->capacity);
+
+    for (size_t i = 0; i < old_capacity; i++) {
+        if (!old_data[i].deleted && old_data[i].type != NULL) {
+            HashTableBucket* bucket = hash_table_get_bucket(self, old_data[i].type);
+            hash_table_set_no_resize(self, bucket, old_data[i].type);
+        }
+    }
+
+    free(old_data);
+}
+
+static void hash_table_maybe_resize(HashTable_Type* self) {
+    if (self->length * 4 >= self->capacity * 3) {
+        hash_table_resize(self);
+    }
+}
+
+static void hash_table_set_maybe_resize(HashTable_Type* self, HashTableBucket* bucket, Type* type) {
+    hash_table_set_no_resize(self, bucket, type);
+    hash_table_maybe_resize(self);
+}
+
 void hash_table_insert(HashTable_Type* self, Type* type) {
     HashTableBucket* bucket = hash_table_get_bucket(self, type);
-    bucket->type = type;
+    hash_table_set_maybe_resize(self, bucket, type);
 }
 
 Type* hash_table_get_or_insert(HashTable_Type* self, Type* type) {
     HashTableBucket* bucket = hash_table_get_bucket(self, type);
-    if (bucket->type == NULL) bucket->type = type;
-    return bucket->type;
+    type = bucket->type;
+
+    if (bucket->type == NULL) {
+        // A resize might happen here
+        hash_table_set_maybe_resize(self, bucket, type);
+    }
+
+    // You can't return bucket->type because a resize might happen right before this, invalidating the pointer
+    return type;
 }
