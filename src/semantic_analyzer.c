@@ -88,6 +88,18 @@ static void sema_error_incompatible_types(SemanticAnalyzer* self, Token token, T
     token_show_in_line(stderr, token);
 }
 
+static void sema_error_invalid_types_for_op(SemanticAnalyzer* self, Token op, Type* left, Type* right) {
+    (void) self;
+
+    fprintf(stderr, "Semantic error on line %zu: operation '"SV_FMT"' can not be performed on ", op.line_number + 1, SV_ARG(op.text));
+    type_print(left);
+    fprintf(stderr, " and ");
+    type_print(right);
+    fprintf(stderr, ".\n");
+
+    token_show_in_line(stderr, op);
+}
+
 static void sema_error_undeclared_variable(SemanticAnalyzer* self, Token token) {
     (void) self;
 
@@ -162,13 +174,21 @@ static bool analyze_expr(SemanticAnalyzer* self, ExprNode* expr, TypeAndMutabili
             TypeAndMutability left;
             if (!analyze_expr(self, expr->as.bin_op.left, &left)) return false;
 
-            if (expr->as.bin_op.type == BIN_MOD && left.type != (Type*) basic_type_new(&self->arena, BASIC_TYPE_INT)) {
-                sema_error(self, expr->as.bin_op.token, "mod can only be performed on integers");
-                return false;
-            }
+            Type* int_type = (Type*) basic_type_new(&self->arena, BASIC_TYPE_INT);
+            Type* float_type = (Type*) basic_type_new(&self->arena, BASIC_TYPE_FLOAT);
 
             TypeAndMutability right;
             if (!analyze_expr(self, expr->as.bin_op.right, &right)) return false;
+
+            if (expr->as.bin_op.type == BIN_MOD && left.type != int_type) {
+                sema_error_invalid_types_for_op(self, expr->as.bin_op.token, left.type, right.type);
+                return false;
+            }
+
+            if (left.type != int_type && left.type != float_type) {
+                sema_error_invalid_types_for_op(self, expr->as.bin_op.token, left.type, right.type);
+                return false;
+            }
 
             if (left.type != right.type) {
                 sema_error_incompatible_types(self, expr->as.bin_op.token, left.type, right.type);
