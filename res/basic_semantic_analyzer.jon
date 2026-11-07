@@ -15,3 +15,8 @@ let c: char = 'a';
 mut c = 'a';
 c = 'b';
 c = 10;
+
+c = error + 20;
+c = 20 + error;
+error = c;
+error;
