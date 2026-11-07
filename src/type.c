@@ -1,5 +1,7 @@
 #include "type.h"
 
+#include <stdlib.h>
+
 void type_fprint(FILE* file, const Type* type) {
     switch (type->type) {
         case TYPE_BASIC: {
@@ -23,8 +25,13 @@ const char* basic_type_to_string(BasicTypeType type) {
     return "";
 }
 
+#define TYPE_ARENA_SIZE 131072
+
 void type_arena_init(TypeArena* arena) {
-    arena->length = 0;
+    *arena = (TypeArena) {
+        .buf = malloc(TYPE_ARENA_SIZE),
+        .length = 0,
+    };
 }
 
 BasicType* basic_type_new(TypeArena* arena, BasicTypeType basic_type) {

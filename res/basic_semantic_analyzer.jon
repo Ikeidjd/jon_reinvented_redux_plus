@@ -1,10 +1,14 @@
 let i = 10 + 0.0;
-let i = 10;
+mut i = 10;
+i = true;
 let f: float = 0;
 let f: float = 10.0 / 2 + 20.0 / 1;
 let f: float = 10.0 / 2.0 + 20.0 / 1.0;
 let x: bool = i;
+let x: bool = true;
+x = false;
 let c: char = 'a' = 10;
 let c: char = 'a';
+mut c = 'a';
 c = 'b';
 c = 10;

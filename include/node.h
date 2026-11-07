@@ -66,6 +66,7 @@ typedef struct {
     Token equals_sign; // For debug information
     TypeNode* type;
     ExprNode* expr;
+    bool mutable;
 } VarDeclNode;
 
 struct DeclNode {

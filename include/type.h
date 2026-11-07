@@ -31,11 +31,9 @@ typedef struct {
 
 const char* basic_type_to_string(BasicTypeType type);
 
-#define TYPE_ALLOCATOR_SIZE 131072
-
 typedef struct {
     size_t length;
-    char buf[TYPE_ALLOCATOR_SIZE];
+    char* buf;
 } TypeArena;
 
 void type_arena_init(TypeArena* arena);

@@ -24,6 +24,7 @@ typedef enum {
     TT_ID,
 
     TT_KW_LET,
+    TT_KW_MUT,
 
     TT_KW_INT,
     TT_KW_FLOAT,

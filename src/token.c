@@ -28,6 +28,8 @@ const char* tt_repr(TokenType tt) {
             return "TT_ID";
         case TT_KW_LET:
             return "TT_KW_LET";
+        case TT_KW_MUT:
+            return "TT_KW_MUT";
         case TT_KW_INT:
             return "TT_KW_INT";
         case TT_KW_FLOAT:
@@ -75,6 +77,8 @@ const char* tt_error_message_name(TokenType tt) {
             return "identifier";
         case TT_KW_LET:
             return "keyword 'let'";
+        case TT_KW_MUT:
+            return "keyword 'mut'";
         case TT_KW_INT:
             return "keyword 'int'";
         case TT_KW_FLOAT:
@@ -111,6 +115,7 @@ bool tt_is_keyword(TokenType tt) {
         case TT_EOF:
             return false;
         case TT_KW_LET:
+        case TT_KW_MUT:
         case TT_KW_INT:
         case TT_KW_FLOAT:
         case TT_KW_BOOL:

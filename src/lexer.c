@@ -13,6 +13,7 @@ typedef struct {
 
 static Keyword keywords[] = {
     { "let", TT_KW_LET },
+    { "mut", TT_KW_MUT },
     { "int", TT_KW_INT },
     { "float", TT_KW_FLOAT },
     { "bool", TT_KW_BOOL },

@@ -163,7 +163,7 @@ static bool analyze_expr(SemanticAnalyzer* self, ExprNode* expr, TypeAndMutabili
         }
     }
 
-    return NULL;
+    return false;
 }
 
 static bool analyze_decl(SemanticAnalyzer* self, DeclNode* decl) {
@@ -174,20 +174,21 @@ static bool analyze_decl(SemanticAnalyzer* self, DeclNode* decl) {
             Type* type = NULL;
             if (decl->as.var_decl.type) {
                 type = analyze_type(self, decl->as.var_decl.type);
-                if (!type) return NULL;
+                if (!type) return false;
             }
 
             TypeAndMutability expr_type;
             if (!analyze_expr(self, decl->as.var_decl.expr, &expr_type)) return false;
 
-            if (!type) type = expr_type.type;
-
-            if (type != expr_type.type) {
+            if (type && type != expr_type.type) {
                 sema_error_incompatible_types(self, decl->as.var_decl.equals_sign, type, expr_type.type);
-                return NULL;
+                return false;
             }
 
-            sema_add_var(self, decl->as.var_decl.var_name.text, expr_type);
+            sema_add_var(self, decl->as.var_decl.var_name.text, (TypeAndMutability) {
+                .type = expr_type.type,
+                .mutable = decl->as.var_decl.mutable,
+            });
         } break;
     }
 

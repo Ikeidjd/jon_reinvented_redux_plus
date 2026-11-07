@@ -88,7 +88,8 @@ static bool parser_parse(Parser* self, Program* program) {
     while (!parser_matches(self, TT_EOF)) {
         Node* node;
         switch (parser_cur(self).type) {
-            case TT_KW_LET: {
+            case TT_KW_LET:
+            case TT_KW_MUT: {
                 node = (Node*) parse_decl(self);
             } break;
             default: {
@@ -146,7 +147,10 @@ static TypeNode* parse_type(Parser* self) {
 }
 
 static DeclNode* parse_decl(Parser* self) {
-    if (!parser_expect(self, TT_KW_LET)) return NULL;
+    bool mutable;
+    if (parser_expect(self, TT_KW_LET)) mutable = false;
+    else if (parser_expect(self, TT_KW_MUT)) mutable = true;
+    else return NULL;
 
     Token var_name = parser_cur(self);
     if (!parser_expect(self, TT_ID)) return NULL;
@@ -172,6 +176,7 @@ static DeclNode* parse_decl(Parser* self) {
             .type = type,
             .equals_sign = equals_sign,
             .expr = expr,
+            .mutable = mutable,
         },
     });
 }
