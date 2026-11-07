@@ -65,6 +65,17 @@ StringView sv_trim(StringView sv) {
     return sv_trim_left(sv_trim_right(sv));
 }
 
+bool sv_eq(StringView a, StringView b) {
+    if (a.length != b.length) return false;
+    if (a.data == b.data) return true;
+
+    for (size_t i = 0; i < a.length; i++) {
+        if (a.data[i] != b.data[i]) return false;
+    }
+
+    return true;
+}
+
 bool sv_eq_cstr(StringView sv, const char* cstr) {
     for (size_t i = 0; i < sv.length; i++) {
         if (cstr[i] == '\0' || sv.data[i] != cstr[i]) return false;

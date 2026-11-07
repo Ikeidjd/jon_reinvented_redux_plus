@@ -80,7 +80,8 @@ typedef enum {
 } TypeNodeType;
 
 typedef struct {
-    BasicType type;
+    Token token;
+    BasicTypeType type;
 } BasicTypeNode;
 
 struct TypeNode {

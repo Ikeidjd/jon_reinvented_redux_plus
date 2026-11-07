@@ -32,6 +32,8 @@ StringView sv_trim_right(StringView sv);
 
 StringView sv_trim(StringView sv);
 
+bool sv_eq(StringView a, StringView b);
+
 bool sv_eq_cstr(StringView sv, const char* cstr);
 
 bool sv_to_int(StringView sv, int* out);

@@ -31,6 +31,8 @@ static void lexer_skip_whitespace(Lexer* self);
 
 static void lexer_setup_start(Lexer* self);
 
+static Token lexer_get_cur_token(Lexer* self, TokenType tt);
+
 static char lexer_peek(Lexer* self);
 
 static char lexer_advance(Lexer* self);

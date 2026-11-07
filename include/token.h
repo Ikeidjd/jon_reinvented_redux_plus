@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdio.h>
+
 #include "string_view.h"
 #include "dynamic_array.h"
 
@@ -47,5 +49,7 @@ typedef struct {
     size_t start_col;
     size_t end_col;
 } Token;
+
+void token_show_in_line(FILE* file, Token token);
 
 typedef DynamicArray(Token) Tokens;

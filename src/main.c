@@ -10,6 +10,7 @@
 #include "node.h"
 #include "lexer.h"
 #include "parser_.h"
+#include "semantic_analyzer.h"
 
 static void dyna_test(void) {
     struct {
@@ -92,12 +93,14 @@ int main(int argc, char** argv) {
 
     if (!lex_program(src, &tokens)) return -1;
 
+    printf("LEXER_START\n");
+
     for (size_t i = 0; i < tokens.length; i++) {
         Token token = tokens.data[i];
         printf("'"SV_FMT"' (%s aka %s)\n", SV_ARG(token.text), tt_repr(token.type), tt_error_message_name(token.type));
     }
 
-    printf("\n");
+    printf("LEXER_END\n\n");
 
     Sega_Node nodes;
     sega_init(&nodes);
@@ -110,7 +113,15 @@ int main(int argc, char** argv) {
 
     if (!b) return -1;
 
+    printf("PARSER START\n");
     program_println(program);
+    printf("PARSER END\n\n");
+
+    if (!analyze_program(&program)) return -1;
+
+    printf("SEMANTIC ANALYZER START\n");
+    program_println(program);
+    printf("SEMANTIC ANALYZER END\n\n");
 
     dyna_destroy(program);
     sega_destroy(nodes);

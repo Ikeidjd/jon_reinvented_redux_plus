@@ -102,15 +102,7 @@ static bool lexer_next(Lexer* self, Token* out) {
         } break;
     }
 
-    *out = (Token) {
-        .type = tt,
-        .text = tt == TT_EOF ? sv_lit("") : sv_slice(self->src, self->start_i, self->i - self->start_i),
-        .line_text = self->line_text,
-        .line_number = self->line,
-        .start_col = self->start_col,
-        .end_col = self->col,
-    };
-
+    *out = lexer_get_cur_token(self, tt);
     return true;
 }
 
@@ -185,6 +177,17 @@ static void lexer_setup_start(Lexer* self) {
     self->start_col = self->col;
 }
 
+static Token lexer_get_cur_token(Lexer* self, TokenType tt) {
+    return (Token) {
+        .type = tt,
+        .text = tt == TT_EOF ? sv_lit("") : sv_slice(self->src, self->start_i, self->i - self->start_i),
+        .line_text = self->line_text,
+        .line_number = self->line,
+        .start_col = self->start_col,
+        .end_col = self->col,
+    };
+}
+
 static char lexer_peek(Lexer* self) {
     return self->i < self->src.length ? self->src.data[self->i] : '\0';
 }
@@ -222,17 +225,8 @@ static void lexer_error(Lexer* self, const char* fmt, ...) {
     fprintf(stderr, "Syntax error on line %zu: ", self->start_line + 1);
     vfprintf(stderr, fmt, args);
     fprintf(stderr, ".\n");
-    fprintf(stderr, SV_FMT"\n", SV_ARG(self->line_text));
 
-    for (size_t i = 0; i < self->start_col; i++) {
-        fputc(' ', stderr);
-    }
-
-    for (size_t i = self->start_col; i < self->col; i++) {
-        fputc('^', stderr);
-    }
-
-    fputc('\n', stderr);
+    token_show_in_line(stderr, lexer_get_cur_token(self, TT_EOF)); // TT_EOF doesn't matter
 
     va_end(args);
 }

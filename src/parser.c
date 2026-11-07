@@ -113,7 +113,7 @@ static bool parser_parse(Parser* self, Program* program) {
 }
 
 static TypeNode* parse_type(Parser* self) {
-    BasicType type;
+    BasicTypeType type;
     switch (parser_cur(self).type) {
         case TT_KW_INT: {
             type = BASIC_TYPE_INT;
@@ -132,12 +132,14 @@ static TypeNode* parse_type(Parser* self) {
             return NULL;
         } break;
     }
-    
+
+    Token token = parser_cur(self);
     parser_advance(self);
 
     return parser_new_type(self, (TypeNode) {
         .type = TYPE_NODE_BASIC,
         .as.basic_type = {
+            .token = token,
             .type = type,
         },
     });
@@ -312,17 +314,8 @@ static void parser_error(Parser* self, const char* fmt, ...) {
     fprintf(stderr, "Syntax error on line %zu: ", parser_cur(self).line_number + 1);
     vfprintf(stderr, fmt, args);
     fprintf(stderr, ".\n");
-    fprintf(stderr, SV_FMT"\n", SV_ARG(parser_cur(self).line_text));
 
-    for (size_t i = 0; i < parser_cur(self).start_col; i++) {
-        fputc(' ', stderr);
-    }
-
-    for (size_t i = parser_cur(self).start_col; i < parser_cur(self).end_col; i++) {
-        fputc('^', stderr);
-    }
-
-    fputc('\n', stderr);
+    token_show_in_line(stderr, parser_cur(self));
 
     va_end(args);
 }

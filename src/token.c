@@ -122,3 +122,17 @@ bool tt_is_keyword(TokenType tt) {
 
     return false;
 }
+
+void token_show_in_line(FILE* file, Token token) {
+    fprintf(file, SV_FMT"\n", SV_ARG(token.line_text));
+
+    for (size_t i = 0; i < token.start_col; i++) {
+        fputc(' ', file);
+    }
+
+    for (size_t i = token.start_col; i < token.end_col; i++) {
+        fputc('^', file);
+    }
+
+    fputc('\n', file);
+}
