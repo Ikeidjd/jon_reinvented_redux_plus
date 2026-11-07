@@ -5,22 +5,19 @@
 #include <stdarg.h>
 
 bool analyze_program(Program* program, TypeArena* arena) {
-    SemanticAnalyzer self;
-    sema_init(&self, *arena);
+    SemanticAnalyzer* self = malloc(sizeof(*self));
+    sema_init(self, *arena);
 
     bool success = true;
 
     for (size_t i = 0; i < program->length; i++) {
-        if (!analyze_node(&self, program->data[i])) {
+        if (!analyze_node(self, program->data[i])) {
             success = false;
-            printf("\n\n");
-            node_println(program->data[i]);
-            printf("\n\n");
         }
     }
 
-    *arena = self.arena;
-    dyna_destroy(&self.vars.vars);
+    *arena = self->arena;
+    free(self);
     return success;
 }
 
@@ -33,23 +30,26 @@ static TypeAndMutability from_type(Type* type, bool mutable) {
 
 static void sema_init(SemanticAnalyzer* self, TypeArena arena) {
     self->arena = arena;
-    dyna_init(&self->vars.vars);
+    self->vars.top = 0;
     self->vars.depth = 0;
 }
 
-static void sema_add_var(SemanticAnalyzer* self, StringView name, TypeAndMutability type) {
+static bool sema_add_var(SemanticAnalyzer* self, StringView name, TypeAndMutability type) {
     Var var = {
         .name = name,
         .type = type,
         .depth = self->vars.depth,
     };
 
-    dyna_append(&self->vars.vars, var);
+    if (self->vars.top >= VARS_CAPACITY) return false;
+
+    self->vars.data[self->vars.top++] = var;
+    return true;
 }
 
 static bool sema_get_var(SemanticAnalyzer* self, StringView name, size_t* out_index, Var* out) {
-    for (size_t i = self->vars.vars.length; i--;) {
-        Var var = self->vars.vars.data[i];
+    for (size_t i = self->vars.top; i--;) {
+        Var var = self->vars.data[i];
 
         if (sv_eq(name, var.name)) {
             *out_index = i;
@@ -99,6 +99,13 @@ static void sema_error_assign_to_immutable(SemanticAnalyzer* self, Token token) 
     (void) self;
 
     fprintf(stderr, "Semantic error on line %zu: cannot assign to immutable.\n", token.line_number + 1);
+    token_show_in_line(stderr, token);
+}
+
+static void sema_error_too_many_vars(SemanticAnalyzer* self, Token token) {
+    (void) self;
+
+    fprintf(stderr, "Semantic error on line %zu: reached variable limit of %d.\n", token.line_number + 1, VARS_CAPACITY);
     token_show_in_line(stderr, token);
 }
 
@@ -155,6 +162,11 @@ static bool analyze_expr(SemanticAnalyzer* self, ExprNode* expr, TypeAndMutabili
             TypeAndMutability left;
             if (!analyze_expr(self, expr->as.bin_op.left, &left)) return false;
 
+            if (expr->as.bin_op.type == BIN_MOD && left.type != (Type*) basic_type_new(&self->arena, BASIC_TYPE_INT)) {
+                sema_error(self, expr->as.bin_op.token, "mod can only be performed on integers");
+                return false;
+            }
+
             TypeAndMutability right;
             if (!analyze_expr(self, expr->as.bin_op.right, &right)) return false;
 
@@ -210,12 +222,16 @@ static bool analyze_decl(SemanticAnalyzer* self, DeclNode* decl) {
                 return false;
             }
 
-            sema_add_var(self, decl->as.var_decl.var_name.text, (TypeAndMutability) {
+            bool success = sema_add_var(self, decl->as.var_decl.var_name.text, (TypeAndMutability) {
                 .type = expr_type.type,
                 .mutable = decl->as.var_decl.mutable,
             });
 
-            return true;
+            if (!success) {
+                sema_error_too_many_vars(self, decl->as.var_decl.equals_sign);
+            }
+
+            return success;
         }
     }
 

@@ -3,8 +3,6 @@
 #include "typedef_utils.h"
 #include "dynamic_array.h"
 
-typedef unsigned char u8;
-
 typedef enum {
     OP_ADD,
     OP_SUB,
@@ -25,7 +23,7 @@ typedef enum {
 
 const char* opcode_to_string(Opcode opcode);
 
-typedef DynamicArray(Opcode) Chunk;
+typedef DynamicArray(u8) Chunk;
 
 void chunk_emit(Chunk* self, Opcode opcode);
 
@@ -42,5 +40,7 @@ void chunk_emit_load_char(Chunk* self, char c);
 void chunk_emit_get_local(Chunk* self, u16 index);
 
 void chunk_emit_set_local(Chunk* self, u16 index);
+
+void chunk_disassemble_one(Chunk self, size_t offset);
 
 void chunk_disassemble(Chunk self);

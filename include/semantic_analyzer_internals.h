@@ -1,7 +1,5 @@
 #pragma once
 
-#include "dynamic_array.h"
-
 typedef struct {
     Type* type;
     bool mutable;
@@ -15,8 +13,11 @@ typedef struct {
     size_t depth;
 } Var;
 
+#define VARS_CAPACITY 65536
+
 typedef struct {
-    DynamicArray(Var) vars;
+    Var data[VARS_CAPACITY];
+    size_t top;
     size_t depth;
 } Vars;
 
@@ -28,7 +29,7 @@ typedef struct {
 
 static void sema_init(SemanticAnalyzer* self, TypeArena arena);
 
-static void sema_add_var(SemanticAnalyzer* self, StringView name, TypeAndMutability type);
+static bool sema_add_var(SemanticAnalyzer* self, StringView name, TypeAndMutability type);
 
 static bool sema_get_var(SemanticAnalyzer* self, StringView name, size_t* out_index, Var* out);
 
@@ -39,6 +40,8 @@ static void sema_error_incompatible_types(SemanticAnalyzer* self, Token token, T
 static void sema_error_undeclared_variable(SemanticAnalyzer* self, Token token);
 
 static void sema_error_assign_to_immutable(SemanticAnalyzer* self, Token token);
+
+static void sema_error_too_many_vars(SemanticAnalyzer* self, Token token);
 
 static bool analyze_node(SemanticAnalyzer* self, Node* node);
 

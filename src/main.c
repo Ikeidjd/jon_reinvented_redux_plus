@@ -12,6 +12,7 @@
 #include "parser_.h"
 #include "semantic_analyzer.h"
 #include "compiler.h"
+#include "vm.h"
 
 static void dyna_test(void) {
     struct {
@@ -133,7 +134,16 @@ int main(int argc, char** argv) {
     printf("SEMANTIC ANALYZER END\n\n");
 
     Chunk chunk = compile_program(program);
+
+    printf("COMPILER START\n");
     chunk_disassemble(chunk);
+    printf("COMPILER END\n\n");
+
+    printf("EXECUTION START\n");
+    execute_chunk(chunk);
+    printf("EXECUTION END\n\n");
+
+    dyna_destroy(&chunk);
 
     End:
     type_arena_destroy(&arena);
