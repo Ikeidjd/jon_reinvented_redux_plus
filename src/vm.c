@@ -35,7 +35,7 @@ static void vm_execute_chunk(VM* self, Chunk chunk) {
         Value b = vm_pop(self); \
         Value a = vm_pop(self); \
         vm_push(self, value_ ## op(a, b)); \
-    } while(0)
+    } while (0)
 
     #define READ_U64() _read_u64(chunk, &ip)
     #define READ_U32() _read_u32(chunk, &ip)

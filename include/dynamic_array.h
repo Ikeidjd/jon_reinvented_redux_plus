@@ -16,7 +16,7 @@ do { \
     (dyna)->data = malloc((initial_capacity) * sizeof((dyna)->data[0])); \
     (dyna)->length = 0; \
     (dyna)->capacity = (initial_capacity); \
-} while(0)
+} while (0)
 
 #define dyna_init(dyna) dyna_init_with_capacity(dyna, DYNA_INITIAL_CAPACITY)
 
@@ -25,7 +25,7 @@ do { \
     free((dyna)->data); \
     (dyna)->length = 0; \
     (dyna)->capacity = 0; \
-} while(0)
+} while (0)
 
 #define dyna_append(dyna, elem) \
 do { \
