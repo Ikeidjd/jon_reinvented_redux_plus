@@ -15,6 +15,7 @@ typedef enum {
     PREC_BIT_SHIFT,
     PREC_ADD,
     PREC_MUL,
+    PREC_UNARY_PREFIX,
 } Precedence;
 
 static Precedence prec_from(TokenType tt);
@@ -42,6 +43,8 @@ static TypeNode* parse_type(Parser* self);
 static DeclNode* parse_decl(Parser* self);
 
 static BinOpType tt_to_bin_op_type(TokenType tt);
+
+static UnaryOpType tt_to_unary_op_type(TokenType tt);
 
 static ExprNode* parse_expr(Parser* self);
 

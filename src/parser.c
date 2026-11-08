@@ -44,12 +44,13 @@ static Precedence prec_from(TokenType tt) {
 static bool prec_is_left_associative(Precedence prec) {
     switch (prec) {
         case PREC_NONE:
-        case PREC_ADD:
-        case PREC_MUL:
         case PREC_BIT_OR:
         case PREC_BIT_XOR:
         case PREC_BIT_AND:
         case PREC_BIT_SHIFT:
+        case PREC_ADD:
+        case PREC_MUL:
+        case PREC_UNARY_PREFIX:
             return true;
         case PREC_ASSIGN:
             return false;
@@ -145,7 +146,7 @@ static TypeNode* parse_type(Parser* self) {
         default: {
             parser_error_expected_cstr(self, "type name");
             return NULL;
-        } break;
+        }
     }
 
     Token token = parser_cur(self);
@@ -227,8 +228,18 @@ static BinOpType tt_to_bin_op_type(TokenType tt) {
             fprintf(stderr, "Invalid binary operator %s. This should never happen.\n", tt_error_message_name(tt));
             assert(false && "Invalid binary operator");
     }
+}
 
-    return BIN_ADD;
+static UnaryOpType tt_to_unary_op_type(TokenType tt) {
+    switch (tt) {
+        case TT_MINUS:
+            return UNARY_NEGATE;
+        case TT_TILDE:
+            return UNARY_BIT_NOT;
+        default:
+            fprintf(stderr, "Invalid unary operator %s. This should never happen.\n", tt_error_message_name(tt));
+            assert(false && "Invalid unary operator");
+    }
 }
 
 static ExprNode* parse_expr(Parser* self) {
@@ -372,29 +383,20 @@ static ExprNode* parse_prefix_expr(Parser* self) {
                 },
             });
         }
-        case TT_MINUS: {
-            Token token = parser_cur(self);
-            parser_advance(self);
-
-            return parser_new_expr(self, (ExprNode) {
-                .type = EXPR_NODE_UNARY_OP,
-                .as.unary_op = {
-                    .type = UNARY_NEGATE,
-                    .token = token,
-                    .operand = parse_expr(self),
-                },
-            });
-        }
+        case TT_MINUS:
         case TT_TILDE: {
             Token token = parser_cur(self);
             parser_advance(self);
 
+            ExprNode* operand = parse_prec(self, PREC_UNARY_PREFIX);
+            if (!operand) return NULL;
+
             return parser_new_expr(self, (ExprNode) {
                 .type = EXPR_NODE_UNARY_OP,
                 .as.unary_op = {
-                    .type = UNARY_BIT_NOT,
+                    .type = tt_to_unary_op_type(token.type),
                     .token = token,
-                    .operand = parse_expr(self),
+                    .operand = operand,
                 },
             });
         }
