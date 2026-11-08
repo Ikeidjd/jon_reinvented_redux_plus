@@ -47,6 +47,11 @@ typedef enum {
     BIN_MUL,
     BIN_DIV,
     BIN_MOD,
+    BIN_BIT_AND,
+    BIN_BIT_XOR,
+    BIN_BIT_OR,
+    BIN_BIT_LSHIFT,
+    BIN_BIT_RSHIFT,
 } BinOpType;
 
 typedef struct {
@@ -63,7 +68,8 @@ typedef struct {
 } AssignmentNode;
 
 typedef enum {
-    UNARY_MINUS,
+    UNARY_NEGATE,
+    UNARY_BIT_NOT,
 } UnaryOpType;
 
 typedef struct {

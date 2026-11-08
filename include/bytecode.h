@@ -10,7 +10,15 @@ typedef enum {
     OP_DIV,
     OP_MOD,
 
+    OP_BIT_AND,
+    OP_BIT_XOR,
+    OP_BIT_OR,
+    OP_BIT_LSHIFT,
+    OP_BIT_RSHIFT,
+
     OP_NEGATE,
+
+    OP_BIT_NOT,
 
     OP_LOAD_INT,
     OP_LOAD_FLOAT,

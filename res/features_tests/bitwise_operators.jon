@@ -1,0 +1,65 @@
+0x1234 & 0xFF;
+0o5670 & 0o20;
+0b1010 & 0b10;
+3 & 1;
+
+0x1234 ^ 0xFF;
+0o5670 ^ 0o20;
+0b1010 ^ 0b10;
+3 ^ 1;
+
+0x1234 | 0xFF;
+0o5670 | 0o20;
+0b1010 | 0b10;
+3 | 1;
+
+0x1234 << 0xFF;
+0o5670 << 0o20;
+0b1010 << 0b10;
+3 << 1;
+
+0x1234 >> 0xFF;
+0o5670 >> 0o20;
+0b1010 >> 0b10;
+3 >> 1;
+
+~0x1234;
+~0o5670;
+~0b1010;
+~3;
+
+# Precedence
+0 | 0 ^ 0 & 0 << 0 >> 0;
+# That is equivalent to the following
+# (0 | (0 ^ (0 & ((0 << 0) >> 0))));
+
+# Invalid literals
+# 0x;
+# 0o;
+# 0b;
+
+# 0xG;
+# 0o8;
+# 0b2;
+
+# Bitwise operations are not supported for other types
+# 0.0 & 0.0;
+# 0.0 ^ 0.0;
+# 0.0 | 0.0;
+# 0.0 << 0.0;
+# 0.0 >> 0.0;
+# ~0.0;
+
+# false & false;
+# false ^ false;
+# false | false;
+# false << false;
+# false >> false;
+# ~false;
+
+# 'a' & 'a';
+# 'a' ^ 'a';
+# 'a' | 'a';
+# 'a' << 'a';
+# 'a' >> 'a';
+# ~'a';

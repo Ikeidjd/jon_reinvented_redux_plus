@@ -21,7 +21,7 @@ static void lexer_init(Lexer* self, StringView src);
 
 static bool lexer_next(Lexer* self, Token* out);
 
-static bool lexer_skip_number(Lexer* self, TokenType* tt);
+static bool lexer_skip_number(Lexer* self, TokenType* tt, char c);
 
 static bool lexer_skip_char(Lexer* self);
 

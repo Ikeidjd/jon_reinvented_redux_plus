@@ -75,8 +75,34 @@ static bool lexer_next(Lexer* self, Token* out) {
         case '%': {
             tt = TT_MOD;
         } break;
+        case '&': {
+            tt = TT_AND;
+        } break;
+        case '^': {
+            tt = TT_XOR;
+        } break;
+        case '|': {
+            tt = TT_OR;
+        } break;
+        case '<': {
+            if (!lexer_matches(self, '<')) goto InvalidCharacter;
+            tt = TT_LTLT;
+        } break;
+        case '>': {
+            if (!lexer_matches(self, '>')) goto InvalidCharacter;
+            tt = TT_GTGT;
+        } break;
+        case '~': {
+            tt = TT_TILDE;
+        } break;
         case '=': {
             tt = TT_EQ;
+        } break;
+        case '(': {
+            tt = TT_LPAREN;
+        } break;
+        case ')': {
+            tt = TT_RPAREN;
         } break;
         case ':': {
             tt = TT_COLON;
@@ -93,21 +119,72 @@ static bool lexer_next(Lexer* self, Token* out) {
         } break;
         default: {
             if (is_ascii_digit(c)) {
-                if (!lexer_skip_number(self, &tt)) return false;
+                if (!lexer_skip_number(self, &tt, c)) return false;
             } else if (is_ascii_alpha(c) || c == '_') {
                 tt = lexer_skip_identifier(self);
             } else {
-                lexer_error(self, "invalid character '%c'", c);
-                return false;
+                goto InvalidCharacter;
             }
         } break;
     }
 
     *out = lexer_get_cur_token(self, tt);
     return true;
+
+    InvalidCharacter:
+    lexer_error(self, "invalid character '%c'", c);
+    return false;
 }
 
-static bool lexer_skip_number(Lexer* self, TokenType* tt) {
+static bool lexer_skip_number(Lexer* self, TokenType* tt, char c) {
+    if (c == '0') {
+        char c = lexer_peek(self);
+
+        if (c == 'x' || c == 'o' || c == 'b') {
+            *tt = TT_INT;
+            lexer_advance(self);
+        }
+
+        switch (c) {
+            case 'x': {
+                if (!is_hex_digit(lexer_peek(self))) {
+                    lexer_error(self, "expected hex number after '0x', but got '%c'", lexer_peek(self));
+                    return false;
+                }
+
+                while (is_hex_digit(lexer_peek(self))) {
+                    lexer_advance(self);
+                }
+
+                return true;
+            }
+            case 'o': {
+                if (!is_oct_digit(lexer_peek(self))) {
+                    lexer_error(self, "expected octal number after '0o', but got '%c'", lexer_peek(self));
+                    return false;
+                }
+
+                while (is_oct_digit(lexer_peek(self))) {
+                    lexer_advance(self);
+                }
+
+                return true;
+            }
+            case 'b': {
+                if (!is_bin_digit(lexer_peek(self))) {
+                    lexer_error(self, "expected binary number after '0b', but got '%c'", lexer_peek(self));
+                    return false;
+                }
+
+                while (is_bin_digit(lexer_peek(self))) {
+                    lexer_advance(self);
+                }
+
+                return true;
+            }
+        }
+    }
+
     while (is_ascii_digit(lexer_peek(self))) {
         lexer_advance(self);
     }

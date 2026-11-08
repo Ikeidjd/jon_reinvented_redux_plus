@@ -18,8 +18,24 @@ const char* tt_repr(TokenType tt) {
             return "TT_DIV";
         case TT_MOD:
             return "TT_MOD";
+        case TT_AND:
+            return "TT_AND";
+        case TT_XOR:
+            return "TT_XOR";
+        case TT_OR:
+            return "TT_OR";
+        case TT_LTLT:
+            return "TT_LTLT";
+        case TT_GTGT:
+            return "TT_GTGT";
+        case TT_TILDE:
+            return "TT_TILDE";
         case TT_EQ:
             return "TT_EQ";
+        case TT_LPAREN:
+            return "TT_LPAREN";
+        case TT_RPAREN:
+            return "TT_RPAREN";
         case TT_COLON:
             return "TT_COLON";
         case TT_SEMI:
@@ -67,8 +83,24 @@ const char* tt_error_message_name(TokenType tt) {
             return "'/'";
         case TT_MOD:
             return "'%'";
+        case TT_AND:
+            return "'&'";
+        case TT_XOR:
+            return "'^'";
+        case TT_OR:
+            return "'|'";
+        case TT_LTLT:
+            return "'<<'";
+        case TT_GTGT:
+            return "'>>'";
+        case TT_TILDE:
+            return "'~'";
         case TT_EQ:
             return "'='";
+        case TT_LPAREN:
+            return "'('";
+        case TT_RPAREN:
+            return "')'";
         case TT_COLON:
             return "':'";
         case TT_SEMI:
@@ -108,7 +140,15 @@ bool tt_is_keyword(TokenType tt) {
         case TT_TIMES:
         case TT_DIV:
         case TT_MOD:
+        case TT_AND:
+        case TT_XOR:
+        case TT_OR:
+        case TT_LTLT:
+        case TT_GTGT:
+        case TT_TILDE:
         case TT_EQ:
+        case TT_LPAREN:
+        case TT_RPAREN:
         case TT_COLON:
         case TT_SEMI:
         case TT_ID:

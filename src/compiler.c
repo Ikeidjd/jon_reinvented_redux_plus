@@ -33,6 +33,44 @@ static void compile_node(Compiler* self, Node* node) {
     }
 }
 
+static Opcode bin_op_type_to_opcode(BinOpType type) {
+    switch (type) {
+        case BIN_ADD:
+            return OP_ADD;
+        case BIN_SUB:
+            return OP_SUB;
+        case BIN_MUL:
+            return OP_MUL;
+        case BIN_DIV:
+            return OP_DIV;
+        case BIN_MOD:
+            return OP_MOD;
+        case BIN_BIT_AND:
+            return OP_BIT_AND;
+        case BIN_BIT_XOR:
+            return OP_BIT_XOR;
+        case BIN_BIT_OR:
+            return OP_BIT_OR;
+        case BIN_BIT_LSHIFT:
+            return OP_BIT_LSHIFT;
+        case BIN_BIT_RSHIFT:
+            return OP_BIT_RSHIFT;
+    }
+
+    assert(false && "Unreachable");
+}
+
+static Opcode unary_op_type_to_opcode(UnaryOpType type) {
+    switch (type) {
+        case UNARY_NEGATE:
+            return OP_NEGATE;
+        case UNARY_BIT_NOT:
+            return OP_BIT_NOT;
+    }
+
+    assert(false && "Unreachable");
+}
+
 static void compile_expr(Compiler* self, ExprNode* expr) {
     switch (expr->type) {
         case EXPR_NODE_INT: {
@@ -53,27 +91,7 @@ static void compile_expr(Compiler* self, ExprNode* expr) {
         case EXPR_NODE_BIN_OP: {
             compile_expr(self, expr->as.bin_op.left);
             compile_expr(self, expr->as.bin_op.right);
-
-            Opcode op;
-            switch (expr->as.bin_op.type) {
-                case BIN_ADD: {
-                    op = OP_ADD;
-                } break;
-                case BIN_SUB: {
-                    op = OP_SUB;
-                } break;
-                case BIN_MUL: {
-                    op = OP_MUL;
-                } break;
-                case BIN_DIV: {
-                    op = OP_DIV;
-                } break;
-                case BIN_MOD: {
-                    op = OP_MOD;
-                } break;
-            }
-
-            chunk_emit(&self->chunk, op);
+            chunk_emit(&self->chunk, bin_op_type_to_opcode(expr->as.bin_op.type));
         } break;
         case EXPR_NODE_ASSIGNMENT: {
             compile_expr(self, expr->as.assignment.right);
@@ -81,15 +99,7 @@ static void compile_expr(Compiler* self, ExprNode* expr) {
         } break;
         case EXPR_NODE_UNARY_OP: {
             compile_expr(self, expr->as.unary_op.operand);
-
-            Opcode op;
-            switch (expr->as.unary_op.type) {
-                case UNARY_MINUS: {
-                    op = OP_NEGATE;
-                } break;
-            }
-
-            chunk_emit(&self->chunk, op);
+            chunk_emit(&self->chunk, unary_op_type_to_opcode(expr->as.unary_op.type));
         } break;
     }
 }

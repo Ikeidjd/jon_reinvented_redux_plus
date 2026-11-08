@@ -37,4 +37,10 @@ bool sv_eq_cstr(StringView sv, const char* cstr);
 
 bool sv_to_i64(StringView sv, i64* out);
 
+bool sv_hex_to_i64(StringView sv, i64* out);
+
+bool sv_oct_to_i64(StringView sv, i64* out);
+
+bool sv_bin_to_i64(StringView sv, i64* out);
+
 bool sv_to_f64(StringView sv, f64* out);

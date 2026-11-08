@@ -32,7 +32,19 @@ Value value_div(Value a, Value b);
 
 Value value_mod(Value a, Value b);
 
+Value value_bit_and(Value a, Value b);
+
+Value value_bit_xor(Value a, Value b);
+
+Value value_bit_or(Value a, Value b);
+
+Value value_bit_lshift(Value a, Value b);
+
+Value value_bit_rshift(Value a, Value b);
+
 Value value_negate(Value value);
+
+Value value_bit_not(Value value);
 
 void value_fprint(FILE* file, Value value);
 

@@ -16,7 +16,18 @@ typedef enum {
     TT_DIV,
     TT_MOD,
 
+    TT_AND,
+    TT_XOR,
+    TT_OR,
+    TT_LTLT,
+    TT_GTGT,
+
+    TT_TILDE,
+
     TT_EQ,
+
+    TT_LPAREN,
+    TT_RPAREN,
 
     TT_COLON,
     TT_SEMI,

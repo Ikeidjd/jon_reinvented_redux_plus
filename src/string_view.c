@@ -94,9 +94,93 @@ bool sv_to_i64(StringView sv, i64* out) {
     u64 n = 0;
 
     for (size_t i = 0; i < sv.length; i++) {
-        if (sv.data[i] < '0' || sv.data[i] > '9') return false;
+        if (!is_ascii_digit(sv.data[i])) return false;
 
         n *= 10;
+        n += sv.data[i] - '0';
+
+        if (n > MAX || (negative && n > MAX + 1)) return false;
+    }
+
+    // Trying to be very careful about signed integer overflow (undefined behavior)
+    if (negative && n == MAX + 1) {
+        *out = -MAX - 1;
+    } else {
+        *out = (i64) n;
+        if (negative) *out = -*out;
+    }
+
+    return true;
+}
+
+bool sv_hex_to_i64(StringView sv, i64* out) {
+    static const u64 MAX = 9223372036854775807ULL;
+
+    bool negative = sv.data[0] == '-';
+    if (negative) sv = sv_slice_from(sv, 1);
+
+    u64 n = 0;
+
+    for (size_t i = 0; i < sv.length; i++) {
+        if (!is_hex_digit(sv.data[i])) return false;
+
+        n *= 16;
+        n += is_ascii_digit(sv.data[i]) ? sv.data[i] - '0' : to_ascii_upper(sv.data[i]) + 10 - 'A';
+
+        if (n > MAX || (negative && n > MAX + 1)) return false;
+    }
+
+    // Trying to be very careful about signed integer overflow (undefined behavior)
+    if (negative && n == MAX + 1) {
+        *out = -MAX - 1;
+    } else {
+        *out = (i64) n;
+        if (negative) *out = -*out;
+    }
+
+    return true;
+}
+
+bool sv_oct_to_i64(StringView sv, i64* out) {
+    static const u64 MAX = 9223372036854775807ULL;
+
+    bool negative = sv.data[0] == '-';
+    if (negative) sv = sv_slice_from(sv, 1);
+
+    u64 n = 0;
+
+    for (size_t i = 0; i < sv.length; i++) {
+        if (!is_oct_digit(sv.data[i])) return false;
+
+        n *= 8;
+        n += sv.data[i] - '0';
+
+        if (n > MAX || (negative && n > MAX + 1)) return false;
+    }
+
+    // Trying to be very careful about signed integer overflow (undefined behavior)
+    if (negative && n == MAX + 1) {
+        *out = -MAX - 1;
+    } else {
+        *out = (i64) n;
+        if (negative) *out = -*out;
+    }
+
+    return true;
+}
+
+bool sv_bin_to_i64(StringView sv, i64* out) {
+    static const u64 MAX = 9223372036854775807ULL;
+
+    bool negative = sv.data[0] == '-';
+    if (negative) sv = sv_slice_from(sv, 1);
+
+    u64 n = 0;
+
+    for (size_t i = 0; i < sv.length; i++) {
+        if (!is_bin_digit(sv.data[i])) return false;
+
+        n *= 2;
         n += sv.data[i] - '0';
 
         if (n > MAX || (negative && n > MAX + 1)) return false;

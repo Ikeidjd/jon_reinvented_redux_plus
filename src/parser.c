@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <assert.h>
 
 bool parse_program(Tokens tokens, Sega_Node* node_buffer, Program* program) {
     Parser self;
@@ -19,6 +20,15 @@ static Precedence prec_from(TokenType tt) {
     switch (tt) {
         case TT_EQ:
             return PREC_ASSIGN;
+        case TT_OR:
+            return PREC_BIT_OR;
+        case TT_XOR:
+            return PREC_BIT_XOR;
+        case TT_AND:
+            return PREC_BIT_AND;
+        case TT_LTLT:
+        case TT_GTGT:
+            return PREC_BIT_SHIFT;
         case TT_PLUS:
         case TT_MINUS:
             return PREC_ADD;
@@ -36,6 +46,10 @@ static bool prec_is_left_associative(Precedence prec) {
         case PREC_NONE:
         case PREC_ADD:
         case PREC_MUL:
+        case PREC_BIT_OR:
+        case PREC_BIT_XOR:
+        case PREC_BIT_AND:
+        case PREC_BIT_SHIFT:
             return true;
         case PREC_ASSIGN:
             return false;
@@ -187,6 +201,36 @@ static DeclNode* parse_decl(Parser* self) {
     });
 }
 
+static BinOpType tt_to_bin_op_type(TokenType tt) {
+    switch (tt) {
+        case TT_PLUS:
+            return BIN_ADD;
+        case TT_MINUS:
+            return BIN_SUB;
+        case TT_TIMES:
+            return BIN_MUL;
+        case TT_DIV:
+            return BIN_DIV;
+        case TT_MOD:
+            return BIN_MOD;
+        case TT_AND:
+            return BIN_BIT_AND;
+        case TT_XOR:
+            return BIN_BIT_XOR;
+        case TT_OR:
+            return BIN_BIT_OR;
+        case TT_LTLT:
+            return BIN_BIT_LSHIFT;
+        case TT_GTGT:
+            return BIN_BIT_RSHIFT;
+        default:
+            fprintf(stderr, "Invalid binary operator %s. This should never happen.\n", tt_error_message_name(tt));
+            assert(false && "Invalid binary operator");
+    }
+
+    return BIN_ADD;
+}
+
 static ExprNode* parse_expr(Parser* self) {
     return parse_prec(self, PREC_NONE);
 }
@@ -218,33 +262,10 @@ static ExprNode* parse_prec(Parser* self, Precedence prev_prec) {
             continue;
         }
 
-        BinOpType op_type;
-        switch (op.type) {
-            case TT_PLUS: {
-                op_type = BIN_ADD;
-            } break;
-            case TT_MINUS: {
-                op_type = BIN_SUB;
-            } break;
-            case TT_TIMES: {
-                op_type = BIN_MUL;
-            } break;
-            case TT_DIV: {
-                op_type = BIN_DIV;
-            } break;
-            case TT_MOD: {
-                op_type = BIN_MOD;
-            } break;
-            default: {
-                fprintf(stderr, "Invalid binary operator '"SV_FMT"'. This should never happen.\n", SV_ARG(op.text));
-                exit(-1);
-            } break;
-        }
-
         lhs = parser_new_expr(self, (ExprNode) {
             .type = EXPR_NODE_BIN_OP,
             .as.bin_op = {
-                .type = op_type,
+                .type = tt_to_bin_op_type(op.type),
                 .token = op,
                 .left = lhs,
                 .right = rhs,
@@ -260,8 +281,28 @@ static ExprNode* parse_prefix_expr(Parser* self) {
         case TT_INT: {
             Token token = parser_cur(self);
 
+            StringView number_text = token.text;
             i64 i;
-            if (!sv_to_i64(token.text, &i)) {
+            bool (*sv_to_int)(StringView sv, i64 *out) = sv_to_i64;
+
+            if (token.text.length > 2) {
+                StringView prefix = sv_slice_until(token.text, 2);
+                StringView possible_number_text = sv_slice_from(token.text, 2);
+
+                if (sv_eq_cstr(prefix, "0x")) {
+                    sv_to_int = sv_hex_to_i64;
+                } else if (sv_eq_cstr(prefix, "0o")) {
+                    sv_to_int = sv_oct_to_i64;
+                } else if (sv_eq_cstr(prefix, "0b")) {
+                    sv_to_int = sv_bin_to_i64;
+                } else {
+                    possible_number_text = number_text;
+                }
+
+                number_text = possible_number_text;
+            }
+
+            if (!sv_to_int(number_text, &i)) {
                 parser_error(self, "integer "SV_FMT" too large to fit in range", SV_ARG(token.text));
                 return NULL;
             }
@@ -338,7 +379,20 @@ static ExprNode* parse_prefix_expr(Parser* self) {
             return parser_new_expr(self, (ExprNode) {
                 .type = EXPR_NODE_UNARY_OP,
                 .as.unary_op = {
-                    .type = UNARY_MINUS,
+                    .type = UNARY_NEGATE,
+                    .token = token,
+                    .operand = parse_expr(self),
+                },
+            });
+        }
+        case TT_TILDE: {
+            Token token = parser_cur(self);
+            parser_advance(self);
+
+            return parser_new_expr(self, (ExprNode) {
+                .type = EXPR_NODE_UNARY_OP,
+                .as.unary_op = {
+                    .type = UNARY_BIT_NOT,
                     .token = token,
                     .operand = parse_expr(self),
                 },

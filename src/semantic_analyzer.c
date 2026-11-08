@@ -188,14 +188,27 @@ static bool analyze_expr(SemanticAnalyzer* self, ExprNode* expr, TypeAndMutabili
             Type* int_type = (Type*) basic_type_new(&self->arena, BASIC_TYPE_INT);
             Type* float_type = (Type*) basic_type_new(&self->arena, BASIC_TYPE_FLOAT);
 
-            if (expr->as.bin_op.type == BIN_MOD && left.type != int_type) {
-                sema_error_invalid_types_for_op(self, expr->as.bin_op.token, left.type, right.type);
-                return false;
-            }
-
-            if (left.type != int_type && left.type != float_type) {
-                sema_error_invalid_types_for_op(self, expr->as.bin_op.token, left.type, right.type);
-                return false;
+            switch (expr->as.bin_op.type) {
+                case BIN_ADD:
+                case BIN_SUB:
+                case BIN_MUL:
+                case BIN_DIV: {
+                    if (left.type != int_type && left.type != float_type) {
+                        sema_error_invalid_types_for_op(self, expr->as.bin_op.token, left.type, right.type);
+                        return false;
+                    }
+                } break;
+                case BIN_MOD:
+                case BIN_BIT_AND:
+                case BIN_BIT_XOR:
+                case BIN_BIT_OR:
+                case BIN_BIT_LSHIFT:
+                case BIN_BIT_RSHIFT: {
+                    if (left.type != int_type) {
+                        sema_error_invalid_types_for_op(self, expr->as.bin_op.token, left.type, right.type);
+                        return false;
+                    }
+                } break;
             }
 
             if (left.type != right.type) {
@@ -233,9 +246,19 @@ static bool analyze_expr(SemanticAnalyzer* self, ExprNode* expr, TypeAndMutabili
             Type* int_type = (Type*) basic_type_new(&self->arena, BASIC_TYPE_INT);
             Type* float_type = (Type*) basic_type_new(&self->arena, BASIC_TYPE_FLOAT);
 
-            if (operand.type != int_type && operand.type != float_type) {
-                sema_error_invalid_type_for_op(self, expr->as.bin_op.token, operand.type);
-                return false;
+            switch (expr->as.unary_op.type) {
+                case UNARY_NEGATE: {
+                    if (operand.type != int_type && operand.type != float_type) {
+                        sema_error_invalid_type_for_op(self, expr->as.bin_op.token, operand.type);
+                        return false;
+                    }
+                } break;
+                case UNARY_BIT_NOT: {
+                    if (operand.type != int_type) {
+                        sema_error_invalid_type_for_op(self, expr->as.bin_op.token, operand.type);
+                        return false;
+                    }
+                } break;
             }
 
             *out = operand;

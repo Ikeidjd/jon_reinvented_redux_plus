@@ -9,6 +9,10 @@
 typedef enum {
     PREC_NONE,
     PREC_ASSIGN,
+    PREC_BIT_OR,
+    PREC_BIT_XOR,
+    PREC_BIT_AND,
+    PREC_BIT_SHIFT,
     PREC_ADD,
     PREC_MUL,
 } Precedence;
@@ -36,6 +40,8 @@ static bool parser_parse(Parser* self, Program* program);
 static TypeNode* parse_type(Parser* self);
 
 static DeclNode* parse_decl(Parser* self);
+
+static BinOpType tt_to_bin_op_type(TokenType tt);
 
 static ExprNode* parse_expr(Parser* self);
 

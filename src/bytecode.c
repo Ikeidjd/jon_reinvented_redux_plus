@@ -16,8 +16,20 @@ const char* opcode_to_string(Opcode opcode) {
             return "OP_DIV";
         case OP_MOD:
             return "OP_MOD";
+        case OP_BIT_AND:
+            return "OP_BIT_AND";
+        case OP_BIT_XOR:
+            return "OP_BIT_XOR";
+        case OP_BIT_OR:
+            return "OP_BIT_OR";
+        case OP_BIT_LSHIFT:
+            return "OP_BIT_LSHIFT";
+        case OP_BIT_RSHIFT:
+            return "OP_BIT_RSHIFT";
         case OP_NEGATE:
             return "OP_NEGATE";
+        case OP_BIT_NOT:
+            return "OP_BIT_NOT";
         case OP_LOAD_INT:
             return "OP_LOAD_INT";
         case OP_LOAD_FLOAT:
@@ -110,7 +122,13 @@ static void _chunk_disassemble_one(Chunk self, size_t* offset) {
         case OP_MUL:
         case OP_DIV:
         case OP_MOD:
+        case OP_BIT_AND:
+        case OP_BIT_XOR:
+        case OP_BIT_OR:
+        case OP_BIT_LSHIFT:
+        case OP_BIT_RSHIFT:
         case OP_NEGATE:
+        case OP_BIT_NOT:
         case OP_POP: {
             chunk_disassemble_simple(self, offset);
         } break;

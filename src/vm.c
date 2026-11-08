@@ -75,8 +75,26 @@ static void vm_execute_chunk(VM* self, Chunk chunk) {
             case OP_MOD: {
                 BIN_OP(mod);
             } break;
+            case OP_BIT_AND: {
+                BIN_OP(bit_and);
+            } break;
+            case OP_BIT_XOR: {
+                BIN_OP(bit_xor);
+            } break;
+            case OP_BIT_OR: {
+                BIN_OP(bit_or);
+            } break;
+            case OP_BIT_LSHIFT: {
+                BIN_OP(bit_lshift);
+            } break;
+            case OP_BIT_RSHIFT: {
+                BIN_OP(bit_rshift);
+            } break;
             case OP_NEGATE: {
                 UNARY_OP(negate);
+            } break;
+            case OP_BIT_NOT: {
+                UNARY_OP(bit_not);
             } break;
             case OP_LOAD_INT: {
                 vm_push(self, (Value) {
