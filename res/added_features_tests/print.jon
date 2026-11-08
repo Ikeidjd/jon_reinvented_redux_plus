@@ -1,0 +1,11 @@
+print 10 * 3;
+
+let c = 'x';
+print c;
+
+print true;
+print false;
+
+mut f = 0.5;
+f = f * 0.5;
+print f;

@@ -1,0 +1,91 @@
+# Logical operators
+false && false;
+false && true;
+true && false;
+true && true;
+
+false || false;
+false || true;
+true || false;
+true || true;
+
+!false;
+!true;
+
+# Comparison operators for int
+10 < 10;
+10 <= 10;
+10 == 10;
+10 != 10;
+10 >= 10;
+10 > 10;
+
+9 < 10;
+9 <= 10;
+9 == 10;
+10 != 10;
+9 >= 10;
+9 > 10;
+
+10 < 9;
+10 <= 9;
+10 == 9;
+10 != 10;
+10 >= 9;
+10 > 9;
+
+# Comparison operators for float
+10.5 < 10.5;
+10.5 <= 10.5;
+10.5 == 10.5;
+10.5 != 10.5;
+10.5 >= 10.5;
+10.5 > 10.5;
+
+9.5 < 10.5;
+9.5 <= 10.5;
+9.5 == 10.5;
+9.5 != 10.5;
+9.5 >= 10.5;
+9.5 > 10.5;
+
+10.5 < 9.5;
+10.5 <= 9.5;
+10.5 == 9.5;
+10.5 != 9.5;
+10.5 >= 9.5;
+10.5 > 9.5;
+
+# Comparison operators for bool; any others will give a type error
+false == false;
+false == true;
+true == false;
+true == true;
+
+false != false;
+false != true;
+true != false;
+true != true;
+
+# Type errors for bool
+# false < false;
+# false <= false;
+# false >= false;
+# false > false;
+
+# Comparison operators for char; any others will give a type error
+'a' == 'a';
+'a' == 'b';
+'b' == 'a';
+'b' == 'b';
+
+'a' != 'a';
+'a' != 'b';
+'b' != 'a';
+'b' != 'b';
+
+# Type errors for char
+# 'a' < 'a';
+# 'a' <= 'a';
+# 'a' >= 'a';
+# 'a' > 'a';

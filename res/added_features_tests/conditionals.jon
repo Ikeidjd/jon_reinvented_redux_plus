@@ -1,0 +1,20 @@
+let initial: char = 'A';
+
+# If with a value must have an else clause
+let i: int = if initial == 'A' {
+    let x: int = 6;
+    let y: int = 10;
+    x - y
+} else if initial == 'B' {
+    2
+} else {
+    0
+};
+
+# If without a value doesn't need an else clause
+if initial == 'C' {
+    0;
+}
+
+if initial == 'D' {}
+else if false {}
