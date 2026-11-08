@@ -21,6 +21,7 @@ typedef enum {
     EXPR_NODE_BOOL,
     EXPR_NODE_CHAR,
     EXPR_NODE_VAR,
+    EXPR_NODE_UNARY_OP,
     EXPR_NODE_BIN_OP,
     EXPR_NODE_ASSIGNMENT,
 } ExprNodeType;
@@ -61,12 +62,23 @@ typedef struct {
     ExprNode* right;
 } AssignmentNode;
 
+typedef enum {
+    UNARY_MINUS,
+} UnaryOpType;
+
+typedef struct {
+    UnaryOpType type;
+    Token token;
+    ExprNode* operand;
+} UnaryOpNode;
+
 struct ExprNode {
     union {
         LiteralNode literal;
         VarNode var;
         BinOpNode bin_op;
         AssignmentNode assignment;
+        UnaryOpNode unary_op;
     } as;
     ExprNodeType type;
 };

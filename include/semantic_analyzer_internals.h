@@ -39,6 +39,8 @@ static void sema_error_incompatible_types(SemanticAnalyzer* self, Token token, T
 
 static void sema_error_invalid_types_for_op(SemanticAnalyzer* self, Token op, Type* left, Type* right);
 
+static void sema_error_invalid_type_for_op(SemanticAnalyzer* self, Token op, Type* type);
+
 static void sema_error_undeclared_variable(SemanticAnalyzer* self, Token token);
 
 static void sema_error_assign_to_immutable(SemanticAnalyzer* self, Token token);

@@ -100,6 +100,16 @@ static void sema_error_invalid_types_for_op(SemanticAnalyzer* self, Token op, Ty
     token_show_in_line(stderr, op);
 }
 
+static void sema_error_invalid_type_for_op(SemanticAnalyzer* self, Token op, Type* type) {
+    (void) self;
+
+    fprintf(stderr, "Semantic error on line %zu: operation '"SV_FMT"' can not be performed on ", op.line_number + 1, SV_ARG(op.text));
+    type_print(type);
+    fprintf(stderr, ".\n");
+
+    token_show_in_line(stderr, op);
+}
+
 static void sema_error_undeclared_variable(SemanticAnalyzer* self, Token token) {
     (void) self;
 
@@ -139,8 +149,6 @@ static bool analyze_node(SemanticAnalyzer* self, Node* node) {
 }
 
 static bool analyze_expr(SemanticAnalyzer* self, ExprNode* expr, TypeAndMutability* out) {
-    (void) self;
-
     switch (expr->type) {
         case EXPR_NODE_INT: {
             *out = from_type((Type*) basic_type_new(&self->arena, BASIC_TYPE_INT), false);
@@ -174,11 +182,11 @@ static bool analyze_expr(SemanticAnalyzer* self, ExprNode* expr, TypeAndMutabili
             TypeAndMutability left;
             if (!analyze_expr(self, expr->as.bin_op.left, &left)) return false;
 
-            Type* int_type = (Type*) basic_type_new(&self->arena, BASIC_TYPE_INT);
-            Type* float_type = (Type*) basic_type_new(&self->arena, BASIC_TYPE_FLOAT);
-
             TypeAndMutability right;
             if (!analyze_expr(self, expr->as.bin_op.right, &right)) return false;
+
+            Type* int_type = (Type*) basic_type_new(&self->arena, BASIC_TYPE_INT);
+            Type* float_type = (Type*) basic_type_new(&self->arena, BASIC_TYPE_FLOAT);
 
             if (expr->as.bin_op.type == BIN_MOD && left.type != int_type) {
                 sema_error_invalid_types_for_op(self, expr->as.bin_op.token, left.type, right.type);
@@ -218,14 +226,27 @@ static bool analyze_expr(SemanticAnalyzer* self, ExprNode* expr, TypeAndMutabili
             *out = left;
             return true;
         }
+        case EXPR_NODE_UNARY_OP: {
+            TypeAndMutability operand;
+            if (!analyze_expr(self, expr->as.unary_op.operand, &operand)) return false;
+
+            Type* int_type = (Type*) basic_type_new(&self->arena, BASIC_TYPE_INT);
+            Type* float_type = (Type*) basic_type_new(&self->arena, BASIC_TYPE_FLOAT);
+
+            if (operand.type != int_type && operand.type != float_type) {
+                sema_error_invalid_type_for_op(self, expr->as.bin_op.token, operand.type);
+                return false;
+            }
+
+            *out = operand;
+            return true;
+        }
     }
 
     return false;
 }
 
 static bool analyze_decl(SemanticAnalyzer* self, DeclNode* decl) {
-    (void) self;
-
     switch (decl->type) {
         case DECL_NODE_VAR: {
             Type* type = NULL;
@@ -259,8 +280,6 @@ static bool analyze_decl(SemanticAnalyzer* self, DeclNode* decl) {
 }
 
 static Type* analyze_type(SemanticAnalyzer* self, TypeNode* type) {
-    (void) self;
-
     switch (type->type) {
         case TYPE_NODE_BASIC: {
             return (Type*) basic_type_new(&self->arena, type->as.basic_type.type);

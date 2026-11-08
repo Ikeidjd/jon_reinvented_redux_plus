@@ -10,6 +10,8 @@ typedef enum {
     OP_DIV,
     OP_MOD,
 
+    OP_NEGATE,
+
     OP_LOAD_INT,
     OP_LOAD_FLOAT,
     OP_LOAD_BOOL,

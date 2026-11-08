@@ -16,6 +16,8 @@ const char* opcode_to_string(Opcode opcode) {
             return "OP_DIV";
         case OP_MOD:
             return "OP_MOD";
+        case OP_NEGATE:
+            return "OP_NEGATE";
         case OP_LOAD_INT:
             return "OP_LOAD_INT";
         case OP_LOAD_FLOAT:
@@ -108,6 +110,7 @@ static void _chunk_disassemble_one(Chunk self, size_t* offset) {
         case OP_MUL:
         case OP_DIV:
         case OP_MOD:
+        case OP_NEGATE:
         case OP_POP: {
             chunk_disassemble_simple(self, offset);
         } break;

@@ -37,6 +37,12 @@ static void vm_execute_chunk(VM* self, Chunk chunk) {
         vm_push(self, value_ ## op(a, b)); \
     } while (0)
 
+    #define UNARY_OP(op) \
+    do { \
+        Value value = vm_pop(self); \
+        vm_push(self, value_ ## op(value)); \
+    } while (0)
+
     #define READ_U64() _read_u64(chunk, &ip)
     #define READ_U32() _read_u32(chunk, &ip)
     #define READ_U16() _read_u16(chunk, &ip)
@@ -68,6 +74,9 @@ static void vm_execute_chunk(VM* self, Chunk chunk) {
             } break;
             case OP_MOD: {
                 BIN_OP(mod);
+            } break;
+            case OP_NEGATE: {
+                UNARY_OP(negate);
             } break;
             case OP_LOAD_INT: {
                 vm_push(self, (Value) {
@@ -117,6 +126,7 @@ static void vm_execute_chunk(VM* self, Chunk chunk) {
     #undef READ_U32
     #undef READ_U64
 
+    #undef UNARY_OP
     #undef BIN_OP
 }
 

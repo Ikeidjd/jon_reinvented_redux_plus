@@ -1,0 +1,51 @@
+# Arithmetic operators for int
+4 + 10;
+4 - 10;
+4 * 10;
+4 / 10;
+4 % 10;
+
+10 + 4;
+10 - 4;
+10 * 4;
+10 / 4;
+10 % 4;
+
+-10;
+--10;
+
+# Arithmetic operators for float
+4.4 + 10.8;
+4.4 - 10.8;
+4.4 * 10.8;
+4.4 / 10.8;
+
+10.8 + 4.4;
+10.8 - 4.4;
+10.8 * 4.4;
+10.8 / 4.4;
+
+-6.6;
+--6.6;
+
+# Type errors for float
+# 4.0 % 10.0;
+# 10.0 % 4.0;
+
+# No arithmetic allowed for the other types
+
+# Type errors for bool
+# false + false;
+# false - false;
+# false * false;
+# false / false;
+# false % false;
+# -false;
+
+# Type errors for char
+# 'a' + 'a';
+# 'a' - 'a';
+# 'a' * 'a';
+# 'a' / 'a';
+# 'a' % 'a';
+# -'a';

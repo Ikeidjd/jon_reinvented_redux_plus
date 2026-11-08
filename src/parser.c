@@ -267,7 +267,6 @@ static ExprNode* parse_prefix_expr(Parser* self) {
             }
 
             parser_advance(self);
-            printf("BBBB\n"I64_FMT"\n", i);
 
             return parser_new_expr(self, (ExprNode) {
                 .type = EXPR_NODE_INT,
@@ -329,6 +328,19 @@ static ExprNode* parse_prefix_expr(Parser* self) {
                 .type = EXPR_NODE_VAR,
                 .as.var = {
                     .token = token,
+                },
+            });
+        }
+        case TT_MINUS: {
+            Token token = parser_cur(self);
+            parser_advance(self);
+
+            return parser_new_expr(self, (ExprNode) {
+                .type = EXPR_NODE_UNARY_OP,
+                .as.unary_op = {
+                    .type = UNARY_MINUS,
+                    .token = token,
+                    .operand = parse_prefix_expr(self),
                 },
             });
         }

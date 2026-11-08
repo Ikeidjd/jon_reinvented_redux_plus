@@ -41,6 +41,10 @@ static void expr_node_fprintln_indent(FILE* file, const ExprNode* expr_node, siz
             expr_node_fprintln_indent(file, expr_node->as.assignment.left, indent);
             expr_node_fprintln_indent(file, expr_node->as.assignment.right, indent);
         } break;
+        case EXPR_NODE_UNARY_OP: {
+            fprintf(file, "UnaryOp("SV_FMT"):\n", SV_ARG(expr_node->as.unary_op.token.text));
+            expr_node_fprintln_indent(file, expr_node->as.unary_op.operand, indent);
+        } break;
     }
 }
 

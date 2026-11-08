@@ -79,6 +79,18 @@ static void compile_expr(Compiler* self, ExprNode* expr) {
             compile_expr(self, expr->as.assignment.right);
             compile_expr_lvalue(self, expr->as.assignment.left);
         } break;
+        case EXPR_NODE_UNARY_OP: {
+            compile_expr(self, expr->as.unary_op.operand);
+
+            Opcode op;
+            switch (expr->as.unary_op.type) {
+                case UNARY_MINUS: {
+                    op = OP_NEGATE;
+                } break;
+            }
+
+            chunk_emit(&self->chunk, op);
+        } break;
     }
 }
 

@@ -32,6 +32,8 @@ Value value_div(Value a, Value b);
 
 Value value_mod(Value a, Value b);
 
+Value value_negate(Value value);
+
 void value_fprint(FILE* file, Value value);
 
 PRINT_GEN_ALL(Value, value)

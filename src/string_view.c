@@ -110,7 +110,6 @@ bool sv_to_i64(StringView sv, i64* out) {
         if (negative) *out = -*out;
     }
 
-    printf("AAAA\n"I64_FMT"\n", *out);
     return true;
 }
 

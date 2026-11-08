@@ -1,17 +1,3 @@
-# Logical operators
-false && false;
-false && true;
-true && false;
-true && true;
-
-false || false;
-false || true;
-true || false;
-true || true;
-
-!false;
-!true;
-
 # Comparison operators for int
 10 < 10;
 10 <= 10;
