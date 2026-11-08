@@ -340,7 +340,7 @@ static ExprNode* parse_prefix_expr(Parser* self) {
                 .as.unary_op = {
                     .type = UNARY_MINUS,
                     .token = token,
-                    .operand = parse_prefix_expr(self),
+                    .operand = parse_expr(self),
                 },
             });
         }
