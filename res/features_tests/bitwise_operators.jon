@@ -31,7 +31,7 @@
 # Precedence
 0 | 0 ^ 0 & 0 << 0 >> 0;
 # That is equivalent to the following
-# (0 | (0 ^ (0 & ((0 << 0) >> 0))));
+(0 | (0 ^ (0 & ((0 << 0) >> 0))));
 
 # Invalid literals
 # 0x;

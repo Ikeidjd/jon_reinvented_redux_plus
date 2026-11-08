@@ -398,6 +398,12 @@ static ExprNode* parse_prefix_expr(Parser* self) {
                 },
             });
         }
+        case TT_LPAREN: {
+            parser_advance(self);
+            ExprNode* expr = parse_expr(self);
+            if (!expr || !parser_expect(self, TT_RPAREN)) return NULL;
+            return expr;
+        }
         default: {
             parser_error_expected_cstr(self, "expression");
             return NULL;
