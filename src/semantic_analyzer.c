@@ -278,24 +278,24 @@ static bool analyze_decl(SemanticAnalyzer* self, DeclNode* decl) {
                 if (!type) return false;
             }
 
-            TypeAndMutability expr_type;
-            if (!analyze_expr(self, decl->as.var_decl.expr, &expr_type)) return false;
+            TypeAndMutability expr;
+            bool expr_success = analyze_expr(self, decl->as.var_decl.expr, &expr);
 
-            if (type && type != expr_type.type) {
-                sema_error_incompatible_types(self, decl->as.var_decl.equals_sign, type, expr_type.type);
-                return false;
+            bool compatible_types = !type || type == expr.type;
+            if (!compatible_types) {
+                sema_error_incompatible_types(self, decl->as.var_decl.equals_sign, type, expr.type);
             }
 
-            bool success = sema_add_var(self, decl->as.var_decl.var_name.text, (TypeAndMutability) {
-                .type = expr_type.type,
+            bool variable_successfully_added = sema_add_var(self, decl->as.var_decl.var_name.text, (TypeAndMutability) {
+                .type = type,
                 .mutable = decl->as.var_decl.mutable,
             });
 
-            if (!success) {
+            if (!variable_successfully_added) {
                 sema_error_too_many_vars(self, decl->as.var_decl.equals_sign);
             }
 
-            return success;
+            return expr_success && compatible_types && variable_successfully_added;
         }
     }
 

@@ -1,8 +1,14 @@
 #include "type.h"
 
 #include <stdlib.h>
+#include <assert.h>
 
 void type_fprint(FILE* file, const Type* type) {
+    if (type == NULL) {
+        fprintf(file, "<error type>");
+        return;
+    }
+
     switch (type->type) {
         case TYPE_BASIC: {
             fprintf(file, "%s", basic_type_to_string(((BasicType*) type)->type));
@@ -11,6 +17,7 @@ void type_fprint(FILE* file, const Type* type) {
 }
 
 hash_t type_hash(Type* type) {
+    assert(type && "Don't try to hash null types");
     return type->hash;
 }
 

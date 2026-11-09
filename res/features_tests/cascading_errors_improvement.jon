@@ -1,0 +1,21 @@
+# Before, a and d would have failed to be created
+# Therefore, everytime they would be used later, an undeclared variable error would happen
+# I have improved that by allowing the semantic analyzer to create them even after an error
+
+# The type annotation allows a to be created with type int despite the errors
+let a: int = 'a' + 10;
+
+# No error here because a exists
+let b = a;
+
+# No error here because a exists and matches the type
+let c: int = a;
+
+# No type annotation, so d gets created with type <error type>
+let d = 'a' + 10;
+
+# No type annotation, so e gladly accepts <error type>
+let e = d;
+
+# Error: int is not compatible with <error type>
+let f: int = e;
