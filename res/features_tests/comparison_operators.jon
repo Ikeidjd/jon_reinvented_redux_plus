@@ -82,3 +82,8 @@ true != true;
 'b' != 'a';
 'b' >= 'a';
 'b' > 'a';
+
+# Basic precedence check
+0 + 1 * 2 / 2 == 0 + 1;
+# Need parentheses for this one
+# false == false != false;
