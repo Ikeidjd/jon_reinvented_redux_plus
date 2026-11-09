@@ -9,14 +9,14 @@
 9 < 10;
 9 <= 10;
 9 == 10;
-10 != 10;
+9 != 10;
 9 >= 10;
 9 > 10;
 
 10 < 9;
 10 <= 9;
 10 == 9;
-10 != 10;
+10 != 9;
 10 >= 9;
 10 > 9;
 
@@ -44,13 +44,15 @@
 
 # Comparison operators for bool; any others will give a type error
 false == false;
-false == true;
-true == false;
-true == true;
-
 false != false;
+
+false == true;
 false != true;
+
+true == false;
 true != false;
+
+true == true;
 true != true;
 
 # Type errors for bool
@@ -59,19 +61,24 @@ true != true;
 # false >= false;
 # false > false;
 
-# Comparison operators for char; any others will give a type error
+# Comparison operators for char
+'a' < 'a';
+'a' <= 'a';
 'a' == 'a';
-'a' == 'b';
-'b' == 'a';
-'b' == 'b';
-
 'a' != 'a';
-'a' != 'b';
-'b' != 'a';
-'b' != 'b';
+'a' >= 'a';
+'a' > 'a';
 
-# Type errors for char
-# 'a' < 'a';
-# 'a' <= 'a';
-# 'a' >= 'a';
-# 'a' > 'a';
+'a' < 'b';
+'a' <= 'b';
+'a' == 'b';
+'a' != 'b';
+'a' >= 'b';
+'a' > 'b';
+
+'b' < 'a';
+'b' <= 'a';
+'b' == 'a';
+'b' != 'a';
+'b' >= 'a';
+'b' > 'a';

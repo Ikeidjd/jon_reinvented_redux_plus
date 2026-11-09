@@ -185,6 +185,11 @@ static bool analyze_expr(SemanticAnalyzer* self, ExprNode* expr, TypeAndMutabili
             TypeAndMutability right;
             if (!analyze_expr(self, expr->as.bin_op.right, &right)) return false;
 
+            if (left.type != right.type) {
+                sema_error_incompatible_types(self, expr->as.bin_op.token, left.type, right.type);
+                return false;
+            }
+
             Type* int_type = (Type*) basic_type_new(&self->arena, BASIC_TYPE_INT);
             Type* float_type = (Type*) basic_type_new(&self->arena, BASIC_TYPE_FLOAT);
 
@@ -209,11 +214,20 @@ static bool analyze_expr(SemanticAnalyzer* self, ExprNode* expr, TypeAndMutabili
                         return false;
                     }
                 } break;
-            }
-
-            if (left.type != right.type) {
-                sema_error_incompatible_types(self, expr->as.bin_op.token, left.type, right.type);
-                return false;
+                case BIN_EQ:
+                case BIN_NE: {
+                    *out = from_type((Type*) basic_type_new(&self->arena, BASIC_TYPE_BOOL), false);
+                    return true;
+                }
+                case BIN_LT:
+                case BIN_LE:
+                case BIN_GT:
+                case BIN_GE: {
+                    if (left.type != int_type && left.type != float_type && left.type != ((Type*) basic_type_new(&self->arena, BASIC_TYPE_CHAR))) {
+                        sema_error_invalid_types_for_op(self, expr->as.bin_op.token, left.type, right.type);
+                        return false;
+                    }
+                } break;
             }
 
             *out = left;

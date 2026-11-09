@@ -9,6 +9,7 @@
 typedef enum {
     PREC_NONE,
     PREC_ASSIGN,
+    PREC_COMPARISON,
     PREC_BIT_OR,
     PREC_BIT_XOR,
     PREC_BIT_AND,
@@ -18,9 +19,16 @@ typedef enum {
     PREC_UNARY_PREFIX,
 } Precedence;
 
+// Hehe... ass
+typedef enum {
+    ASS_LEFT,
+    ASS_RIGHT,
+    ASS_PAREN,
+} Associativity;
+
 static Precedence prec_from(TokenType tt);
 
-static bool prec_is_left_associative(Precedence prec);
+static Associativity prec_get_associativity(Precedence prec);
 
 typedef struct {
     Sega_Node node_buffer;

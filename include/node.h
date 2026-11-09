@@ -52,6 +52,12 @@ typedef enum {
     BIN_BIT_OR,
     BIN_BIT_LSHIFT,
     BIN_BIT_RSHIFT,
+    BIN_EQ,
+    BIN_NE,
+    BIN_LT,
+    BIN_LE,
+    BIN_GT,
+    BIN_GE,
 } BinOpType;
 
 typedef struct {

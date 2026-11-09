@@ -85,18 +85,20 @@ static bool lexer_next(Lexer* self, Token* out) {
             tt = TT_OR;
         } break;
         case '<': {
-            if (!lexer_matches(self, '<')) goto InvalidCharacter;
-            tt = TT_LTLT;
+            tt = lexer_matches(self, '<') ? TT_LTLT : lexer_matches(self, '=') ? TT_LTEQ : TT_LT;
         } break;
         case '>': {
-            if (!lexer_matches(self, '>')) goto InvalidCharacter;
-            tt = TT_GTGT;
+            tt = lexer_matches(self, '>') ? TT_GTGT : lexer_matches(self, '=') ? TT_GTEQ : TT_GT;
         } break;
         case '~': {
             tt = TT_TILDE;
         } break;
+        case '!': {
+            if (!lexer_matches(self, '=')) goto InvalidCharacter;
+            tt = TT_BANG_EQ;
+        } break;
         case '=': {
-            tt = TT_EQ;
+            tt = lexer_matches(self, '=') ? TT_EQEQ : TT_EQ;
         } break;
         case '(': {
             tt = TT_LPAREN;

@@ -16,6 +16,13 @@ typedef enum {
     OP_BIT_LSHIFT,
     OP_BIT_RSHIFT,
 
+    OP_EQ,
+    OP_NE,
+    OP_LT,
+    OP_LE,
+    OP_GT,
+    OP_GE,
+
     OP_NEGATE,
 
     OP_BIT_NOT,

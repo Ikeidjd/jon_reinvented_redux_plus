@@ -55,6 +55,18 @@ static Opcode bin_op_type_to_opcode(BinOpType type) {
             return OP_BIT_LSHIFT;
         case BIN_BIT_RSHIFT:
             return OP_BIT_RSHIFT;
+        case BIN_EQ:
+            return OP_EQ;
+        case BIN_NE:
+            return OP_NE;
+        case BIN_LT:
+            return OP_LT;
+        case BIN_LE:
+            return OP_LE;
+        case BIN_GT:
+            return OP_GT;
+        case BIN_GE:
+            return OP_GE;
     }
 
     assert(false && "Unreachable");

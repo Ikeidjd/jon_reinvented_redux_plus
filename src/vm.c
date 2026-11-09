@@ -30,11 +30,21 @@ MAKE_READ(f64)
 MAKE_READ(f32)
 
 static void vm_execute_chunk(VM* self, Chunk chunk) {
-    #define BIN_OP(op) \
+    #define ARITH_OP(op) \
     do { \
         Value b = vm_pop(self); \
         Value a = vm_pop(self); \
         vm_push(self, value_ ## op(a, b)); \
+    } while (0)
+
+    #define COMP_OP(op) \
+    do { \
+        Value b = vm_pop(self); \
+        Value a = vm_pop(self); \
+        vm_push(self, (Value) { \
+            .type = VALUE_BOOL, \
+            .as.boolean = value_ ## op(a, b), \
+        }); \
     } while (0)
 
     #define UNARY_OP(op) \
@@ -61,34 +71,52 @@ static void vm_execute_chunk(VM* self, Chunk chunk) {
 
         switch (READ_OPCODE()) {
             case OP_ADD: {
-                BIN_OP(add);
+                ARITH_OP(add);
             } break;
             case OP_SUB: {
-                BIN_OP(sub);
+                ARITH_OP(sub);
             } break;
             case OP_MUL: {
-                BIN_OP(mul);
+                ARITH_OP(mul);
             } break;
             case OP_DIV: {
-                BIN_OP(div);
+                ARITH_OP(div);
             } break;
             case OP_MOD: {
-                BIN_OP(mod);
+                ARITH_OP(mod);
             } break;
             case OP_BIT_AND: {
-                BIN_OP(bit_and);
+                ARITH_OP(bit_and);
             } break;
             case OP_BIT_XOR: {
-                BIN_OP(bit_xor);
+                ARITH_OP(bit_xor);
             } break;
             case OP_BIT_OR: {
-                BIN_OP(bit_or);
+                ARITH_OP(bit_or);
             } break;
             case OP_BIT_LSHIFT: {
-                BIN_OP(bit_lshift);
+                ARITH_OP(bit_lshift);
             } break;
             case OP_BIT_RSHIFT: {
-                BIN_OP(bit_rshift);
+                ARITH_OP(bit_rshift);
+            } break;
+            case OP_EQ: {
+                COMP_OP(eq);
+            } break;
+            case OP_NE: {
+                COMP_OP(ne);
+            } break;
+            case OP_LT: {
+                COMP_OP(lt);
+            } break;
+            case OP_LE: {
+                COMP_OP(le);
+            } break;
+            case OP_GT: {
+                COMP_OP(gt);
+            } break;
+            case OP_GE: {
+                COMP_OP(ge);
             } break;
             case OP_NEGATE: {
                 UNARY_OP(negate);
@@ -145,7 +173,8 @@ static void vm_execute_chunk(VM* self, Chunk chunk) {
     #undef READ_U64
 
     #undef UNARY_OP
-    #undef BIN_OP
+    #undef COMP_OP
+    #undef ARITH_OP
 }
 
 static void vm_push(VM* self, Value value) {

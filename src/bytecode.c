@@ -26,6 +26,18 @@ const char* opcode_to_string(Opcode opcode) {
             return "OP_BIT_LSHIFT";
         case OP_BIT_RSHIFT:
             return "OP_BIT_RSHIFT";
+        case OP_EQ:
+            return "OP_EQ";
+        case OP_NE:
+            return "OP_NE";
+        case OP_LT:
+            return "OP_LT";
+        case OP_LE:
+            return "OP_LE";
+        case OP_GT:
+            return "OP_GT";
+        case OP_GE:
+            return "OP_GE";
         case OP_NEGATE:
             return "OP_NEGATE";
         case OP_BIT_NOT:
@@ -127,6 +139,12 @@ static void _chunk_disassemble_one(Chunk self, size_t* offset) {
         case OP_BIT_OR:
         case OP_BIT_LSHIFT:
         case OP_BIT_RSHIFT:
+        case OP_EQ:
+        case OP_NE:
+        case OP_LT:
+        case OP_LE:
+        case OP_GT:
+        case OP_GE:
         case OP_NEGATE:
         case OP_BIT_NOT:
         case OP_POP: {

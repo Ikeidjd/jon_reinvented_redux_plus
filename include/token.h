@@ -24,6 +24,13 @@ typedef enum {
 
     TT_TILDE,
 
+    TT_EQEQ,
+    TT_BANG_EQ,
+    TT_LT,
+    TT_LTEQ,
+    TT_GT,
+    TT_GTEQ,
+
     TT_EQ,
 
     TT_LPAREN,

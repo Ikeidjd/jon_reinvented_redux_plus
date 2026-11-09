@@ -23,33 +23,29 @@ typedef struct {
 } Value;
 
 Value value_add(Value a, Value b);
-
 Value value_sub(Value a, Value b);
-
 Value value_mul(Value a, Value b);
-
 Value value_div(Value a, Value b);
-
 Value value_mod(Value a, Value b);
 
 Value value_bit_and(Value a, Value b);
-
 Value value_bit_xor(Value a, Value b);
-
 Value value_bit_or(Value a, Value b);
-
 Value value_bit_lshift(Value a, Value b);
-
 Value value_bit_rshift(Value a, Value b);
 
-Value value_negate(Value value);
+bool value_eq(Value a, Value b);
+bool value_ne(Value a, Value b);
+bool value_lt(Value a, Value b);
+bool value_le(Value a, Value b);
+bool value_gt(Value a, Value b);
+bool value_ge(Value a, Value b);
 
+Value value_negate(Value value);
 Value value_bit_not(Value value);
 
 void value_fprint(FILE* file, Value value);
-
 PRINT_GEN_ALL(Value, value)
 
 void value_repr_fprint(FILE* file, Value value);
-
 PRINT_GEN_ALL(Value, value_repr)

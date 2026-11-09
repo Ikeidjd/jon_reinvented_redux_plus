@@ -20,6 +20,13 @@ static Precedence prec_from(TokenType tt) {
     switch (tt) {
         case TT_EQ:
             return PREC_ASSIGN;
+        case TT_EQEQ:
+        case TT_BANG_EQ:
+        case TT_LT:
+        case TT_LTEQ:
+        case TT_GT:
+        case TT_GTEQ:
+            return PREC_COMPARISON;
         case TT_OR:
             return PREC_BIT_OR;
         case TT_XOR:
@@ -41,7 +48,7 @@ static Precedence prec_from(TokenType tt) {
     }
 }
 
-static bool prec_is_left_associative(Precedence prec) {
+static Associativity prec_get_associativity(Precedence prec) {
     switch (prec) {
         case PREC_NONE:
         case PREC_BIT_OR:
@@ -51,12 +58,14 @@ static bool prec_is_left_associative(Precedence prec) {
         case PREC_ADD:
         case PREC_MUL:
         case PREC_UNARY_PREFIX:
-            return true;
+            return ASS_LEFT;
         case PREC_ASSIGN:
-            return false;
+            return ASS_RIGHT;
+        case PREC_COMPARISON:
+            return ASS_PAREN;
     }
 
-    return true;
+    assert(false && "Unreachable");
 }
 
 static void parser_init(Parser* self, Tokens tokens, Sega_Node node_buffer) {
@@ -224,6 +233,18 @@ static BinOpType tt_to_bin_op_type(TokenType tt) {
             return BIN_BIT_LSHIFT;
         case TT_GTGT:
             return BIN_BIT_RSHIFT;
+        case TT_EQEQ:
+            return BIN_EQ;
+        case TT_BANG_EQ:
+            return BIN_NE;
+        case TT_LT:
+            return BIN_LT;
+        case TT_LTEQ:
+            return BIN_LE;
+        case TT_GT:
+            return BIN_GT;
+        case TT_GTEQ:
+            return BIN_GE;
         default:
             fprintf(stderr, "Invalid binary operator %s. This should never happen.\n", tt_error_message_name(tt));
             assert(false && "Invalid binary operator");
@@ -247,13 +268,19 @@ static ExprNode* parse_expr(Parser* self) {
 }
 
 static ExprNode* parse_prec(Parser* self, Precedence prev_prec) {
-    if (prec_is_left_associative(prev_prec)) prev_prec++;
+    Associativity ass = prec_get_associativity(prev_prec);
+    if (ass == ASS_LEFT) prev_prec++;
 
     ExprNode* lhs = parse_prefix_expr(self);
     if (!lhs) return NULL;
 
     Precedence next_prec;
     while ((next_prec = prec_from(parser_cur(self).type)) >= prev_prec) {
+        if (next_prec == prev_prec && ass == ASS_PAREN) {
+            parser_error(self, "need parentheses to determine associativity for operation '"SV_FMT"'", SV_ARG(parser_cur(self).text));
+            return NULL;
+        }
+
         Token op = parser_cur(self);
         parser_advance(self);
 

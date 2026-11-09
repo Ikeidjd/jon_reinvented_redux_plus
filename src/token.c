@@ -30,6 +30,18 @@ const char* tt_repr(TokenType tt) {
             return "TT_GTGT";
         case TT_TILDE:
             return "TT_TILDE";
+        case TT_EQEQ:
+            return "TT_EQEQ";
+        case TT_BANG_EQ:
+            return "TT_BANG_EQ";
+        case TT_LT:
+            return "TT_LT";
+        case TT_LTEQ:
+            return "TT_LTEQ";
+        case TT_GT:
+            return "TT_GT";
+        case TT_GTEQ:
+            return "TT_GTEQ";
         case TT_EQ:
             return "TT_EQ";
         case TT_LPAREN:
@@ -95,6 +107,18 @@ const char* tt_error_message_name(TokenType tt) {
             return "'>>'";
         case TT_TILDE:
             return "'~'";
+        case TT_EQEQ:
+            return "'=='";
+        case TT_BANG_EQ:
+            return "'!='";
+        case TT_LT:
+            return "'<'";
+        case TT_LTEQ:
+            return "'<='";
+        case TT_GT:
+            return "'>'";
+        case TT_GTEQ:
+            return "'>='";
         case TT_EQ:
             return "'='";
         case TT_LPAREN:
@@ -146,6 +170,12 @@ bool tt_is_keyword(TokenType tt) {
         case TT_LTLT:
         case TT_GTGT:
         case TT_TILDE:
+        case TT_EQEQ:
+        case TT_BANG_EQ:
+        case TT_LT:
+        case TT_LTEQ:
+        case TT_GT:
+        case TT_GTEQ:
         case TT_EQ:
         case TT_LPAREN:
         case TT_RPAREN:
