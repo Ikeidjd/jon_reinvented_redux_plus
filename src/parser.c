@@ -209,7 +209,9 @@ static BlockNode* parse_block(Parser* self) {
 }
 
 static TypeNode* parse_type(Parser* self) {
+    Token token = parser_cur(self);
     PrimitiveTypeType type;
+
     switch (parser_cur(self).type) {
         case TT_KW_INT: {
             type = PRIMITIVE_TYPE_INT;
@@ -223,13 +225,22 @@ static TypeNode* parse_type(Parser* self) {
         case TT_KW_CHAR: {
             type = PRIMITIVE_TYPE_CHAR;
         } break;
+        case TT_KW_MONOSTATE: {
+            parser_advance(self);
+
+            return parser_new_type(self, (TypeNode) {
+                .type = TYPE_NODE_MONOSTATE,
+                .as.monostate_type = {
+                    .token = token,
+                },
+            });
+        }
         default: {
             parser_error_expected_cstr(self, "type name");
             return NULL;
         }
     }
 
-    Token token = parser_cur(self);
     parser_advance(self);
 
     return parser_new_type(self, (TypeNode) {

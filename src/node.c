@@ -81,8 +81,11 @@ static void type_node_fprintln_indent(FILE* file, const TypeNode* type_node, siz
     process_indent(file, &indent);
 
     switch (type_node->type) {
-        case DECL_NODE_VAR: {
+        case TYPE_NODE_PRIMITIVE: {
             fprintf(file, "PrimitiveType(%s)\n", primitive_type_to_string(type_node->as.primitive_type.type));
+        } break;
+        case TYPE_NODE_MONOSTATE: {
+            fprintf(file, "MonostateType\n");
         } break;
     }
 }

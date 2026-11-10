@@ -11,6 +11,11 @@ let i: int = if initial == 'A' {
     0
 };
 
+# Error: if with a value but with no else clause
+# if true {
+#     0
+# }
+
 # If without a value doesn't need an else clause
 if initial == 'C' {
     0;

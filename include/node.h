@@ -151,6 +151,7 @@ struct DeclNode {
 
 typedef enum {
     TYPE_NODE_PRIMITIVE,
+    TYPE_NODE_MONOSTATE,
 } TypeNodeType;
 
 typedef struct {
@@ -158,9 +159,14 @@ typedef struct {
     PrimitiveTypeType type;
 } PrimitiveTypeNode;
 
+typedef struct {
+    Token token;
+} MonostateTypeNode;
+
 struct TypeNode {
     union {
         PrimitiveTypeNode primitive_type;
+        MonostateTypeNode monostate_type;
     } as;
     TypeNodeType type;
 };

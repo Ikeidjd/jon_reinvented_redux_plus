@@ -191,6 +191,8 @@ static bool analyze_node(SemanticAnalyzer* self, Node* node) {
 }
 
 static bool analyze_expr(SemanticAnalyzer* self, ExprNode* expr, TypeAndMutability* out) {
+    *out = from_type(NULL, false);
+
     switch (expr->type) {
         case EXPR_NODE_INT: {
             *out = from_type((Type*) primitive_type_new(&self->arena, PRIMITIVE_TYPE_INT), false);
@@ -475,6 +477,9 @@ static Type* analyze_type(SemanticAnalyzer* self, TypeNode* type) {
     switch (type->type) {
         case TYPE_NODE_PRIMITIVE: {
             return (Type*) primitive_type_new(&self->arena, type->as.primitive_type.type);
+        }
+        case TYPE_NODE_MONOSTATE: {
+            return monostate_type_new(&self->arena);
         }
     }
 

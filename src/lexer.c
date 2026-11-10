@@ -21,6 +21,7 @@ static Keyword keywords[] = {
     { "true", TT_KW_TRUE },
     { "false", TT_KW_FALSE },
     { "char", TT_KW_CHAR },
+    { "monostate", TT_KW_MONOSTATE },
 };
 
 bool lex_program(StringView src, Tokens* token_buf) {
@@ -132,17 +133,14 @@ static bool lexer_next(Lexer* self, Token* out) {
             } else if (is_ascii_alpha(c) || c == '_') {
                 tt = lexer_skip_identifier(self);
             } else {
-                goto InvalidCharacter;
+                lexer_error(self, "invalid character '%c'", c);
+                return false;
             }
         } break;
     }
 
     *out = lexer_get_cur_token(self, tt);
     return true;
-
-    InvalidCharacter:
-    lexer_error(self, "invalid character '%c'", c);
-    return false;
 }
 
 static bool lexer_skip_number(Lexer* self, TokenType* tt, char c) {

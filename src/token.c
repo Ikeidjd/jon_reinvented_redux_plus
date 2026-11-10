@@ -84,6 +84,8 @@ const char* tt_repr(TokenType tt) {
             return "TT_KW_FALSE";
         case TT_KW_CHAR:
             return "TT_KW_CHAR";
+        case TT_KW_MONOSTATE:
+            return "TT_KW_MONOSTATE";
         case TT_EOF:
             return "TT_EOF";
     }
@@ -173,6 +175,8 @@ const char* tt_error_message_name(TokenType tt) {
             return "keyword 'false'";
         case TT_KW_CHAR:
             return "keyword 'char'";
+        case TT_KW_MONOSTATE:
+            return "keyword 'monostate'";
         case TT_EOF:
             return "end of file";
     }
@@ -224,6 +228,7 @@ bool tt_is_keyword(TokenType tt) {
         case TT_KW_TRUE:
         case TT_KW_FALSE:
         case TT_KW_CHAR:
+        case TT_KW_MONOSTATE:
             return true;
     }
 

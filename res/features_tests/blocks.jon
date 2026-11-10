@@ -15,14 +15,17 @@ let step_by_step = {
     d + 7
 }; # 67
 
-# Blocks that don't return a value have type monostate, which can't be annotated
+# Blocks that don't return a value have type monostate
 # Values of this type will be printed as '{}'
-let no_value = {}; # {}
+let no_value: monostate = {}; # {}
 
 # Errors
 # monostate is not compatible with other types and operations
 # let a: int = {};
 # {} + {};
+
+# let b: monostate = false;
+# b + 10;
 
 # Unbalanced braces
 # }{};{{}

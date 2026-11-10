@@ -58,6 +58,7 @@ typedef enum {
     TT_KW_TRUE,
     TT_KW_FALSE,
     TT_KW_CHAR,
+    TT_KW_MONOSTATE,
 
     TT_EOF,
 } TokenType;
