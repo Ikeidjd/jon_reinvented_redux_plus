@@ -127,6 +127,18 @@ static void vm_execute_chunk(VM* self, Chunk chunk) {
             case OP_NOT: {
                 UNARY_OP(not);
             } break;
+            case OP_CAST_INT: {
+                UNARY_OP(cast_int);
+            } break;
+            case OP_CAST_FLOAT: {
+                UNARY_OP(cast_float);
+            } break;
+            case OP_CAST_BOOL: {
+                UNARY_OP(cast_bool);
+            } break;
+            case OP_CAST_CHAR: {
+                UNARY_OP(cast_char);
+            } break;
             case OP_LOAD_INT: {
                 vm_push(self, (Value) {
                     .type = VALUE_INT,

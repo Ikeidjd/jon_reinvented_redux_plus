@@ -6,6 +6,7 @@
 #include "segment_array.h"
 #include "token.h"
 #include "type.h"
+#include "bytecode.h"
 
 // IMPORTANT: the types are below the unions to make pointer casting easy
 // DO NOT REARRANGE
@@ -24,6 +25,7 @@ typedef enum {
     EXPR_NODE_UNARY_OP,
     EXPR_NODE_BIN_OP,
     EXPR_NODE_LOGICAL_OP,
+    EXPR_NODE_CAST,
     EXPR_NODE_ASSIGNMENT,
 } ExprNodeType;
 
@@ -82,6 +84,13 @@ typedef struct {
 
 typedef struct {
     Token token;
+    ExprNode* expr;
+    TypeNode* type;
+    Opcode cast_opcode;
+} CastNode;
+
+typedef struct {
+    Token token;
     ExprNode* left;
     ExprNode* right;
 } AssignmentNode;
@@ -104,6 +113,7 @@ struct ExprNode {
         VarNode var;
         BinOpNode bin_op;
         LogicalOpNode logical_op;
+        CastNode cast;
         AssignmentNode assignment;
         UnaryOpNode unary_op;
     } as;

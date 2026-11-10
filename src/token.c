@@ -1,5 +1,7 @@
 #include "token.h"
 
+#include <assert.h>
+
 const char* tt_repr(TokenType tt) {
     switch (tt) {
         case TT_INT:
@@ -64,6 +66,8 @@ const char* tt_repr(TokenType tt) {
             return "TT_KW_LET";
         case TT_KW_MUT:
             return "TT_KW_MUT";
+        case TT_KW_AS:
+            return "TT_KW_AS";
         case TT_KW_INT:
             return "TT_KW_INT";
         case TT_KW_FLOAT:
@@ -147,6 +151,8 @@ const char* tt_error_message_name(TokenType tt) {
             return "keyword 'let'";
         case TT_KW_MUT:
             return "keyword 'mut'";
+        case TT_KW_AS:
+            return "keyword 'as'";
         case TT_KW_INT:
             return "keyword 'int'";
         case TT_KW_FLOAT:
@@ -201,6 +207,7 @@ bool tt_is_keyword(TokenType tt) {
             return false;
         case TT_KW_LET:
         case TT_KW_MUT:
+        case TT_KW_AS:
         case TT_KW_INT:
         case TT_KW_FLOAT:
         case TT_KW_BOOL:
@@ -210,7 +217,7 @@ bool tt_is_keyword(TokenType tt) {
             return true;
     }
 
-    return false;
+    assert(false && "Unreachable");
 }
 
 void token_show_in_line(FILE* file, Token token) {

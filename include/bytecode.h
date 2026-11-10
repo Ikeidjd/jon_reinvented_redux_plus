@@ -27,6 +27,11 @@ typedef enum {
     OP_BIT_NOT,
     OP_NOT,
 
+    OP_CAST_INT,
+    OP_CAST_FLOAT,
+    OP_CAST_BOOL,
+    OP_CAST_CHAR,
+
     OP_LOAD_INT,
     OP_LOAD_FLOAT,
     OP_LOAD_BOOL,

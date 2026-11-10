@@ -18,6 +18,7 @@ typedef enum {
     PREC_BIT_SHIFT,
     PREC_ADD,
     PREC_MUL,
+    PREC_CAST,
     PREC_UNARY_PREFIX,
 } Precedence;
 
@@ -75,6 +76,8 @@ static bool parser_matches(Parser* self, TokenType tt);
 static bool parser_expect(Parser* self, TokenType tt);
 
 static void parser_error(Parser* self, const char* fmt, ...) __attribute__((format(printf, 2, 3)));
+
+static void parser_error_at(Parser* self, Token token, const char* fmt, ...) __attribute__((format(printf, 3, 4)));
 
 static void parser_error_expected(Parser* self, StringView expected);
 

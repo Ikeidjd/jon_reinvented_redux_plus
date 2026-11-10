@@ -45,6 +45,10 @@ static void sema_error_undeclared_variable(SemanticAnalyzer* self, Token token);
 
 static void sema_error_assign_to_immutable(SemanticAnalyzer* self, Token token);
 
+static void sema_error_casting_non_primitives(SemanticAnalyzer* self, Token token, Type* src, Type* dst);
+
+static void sema_error_casting(SemanticAnalyzer* self, Token token, BasicType* src, BasicType* dst);
+
 static void sema_error_too_many_vars(SemanticAnalyzer* self, Token token);
 
 static bool analyze_node(SemanticAnalyzer* self, Node* node);

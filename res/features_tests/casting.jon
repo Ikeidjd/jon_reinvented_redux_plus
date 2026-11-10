@@ -1,0 +1,44 @@
+# Normal casting
+10 as int; # 10
+10 as float; # 10.0
+67 as char; # 'C'
+
+10.5 as int; # 10
+10.5 as float; # 10.5
+
+'a' as int; # 97
+'a' as char; # 'a'
+
+false as int; # 0
+true as int; # 1
+false as bool; # false
+true as bool; # true
+
+# Edge cases
+# Wrap-around may happen when casting from int to char
+(67 + 0x100) as char; # 'C'
+
+# Unary minus has a higher precedence, so it runs first, as in '(-189) as char', instead of last, as in '-(189 as char)', which would give a type error
+-189 as char; # 'C'
+
+# float might turn into the int limit if it's out of bounds
+ 100000000000000000000.0 as int; #  9223372036854775807, since that is the max int value
+-100000000000000000000.0 as int; # -9223372036854775808, since that is the min int value
+
+# Type errors
+# 10 as bool;
+
+# 10.5 as bool;
+# 10.5 as char;
+
+# 'a' as float;
+# 'a' as bool;
+
+# false as float;
+# false as char;
+
+# let a = true + false; # <error type>
+# a as int; # Casting is only supported for primitive types
+
+# Error: expected type name
+# 0 as;

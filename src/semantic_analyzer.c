@@ -80,9 +80,9 @@ static void sema_error_incompatible_types(SemanticAnalyzer* self, Token token, T
     (void) self;
 
     fprintf(stderr, "Semantic error on line %zu: incompatible types ", token.line_number + 1);
-    type_print(left);
+    type_fprint(stderr, left);
     fprintf(stderr, " and ");
-    type_print(right);
+    type_fprint(stderr, right);
     fprintf(stderr, ".\n");
 
     token_show_in_line(stderr, token);
@@ -92,9 +92,9 @@ static void sema_error_invalid_types_for_op(SemanticAnalyzer* self, Token op, Ty
     (void) self;
 
     fprintf(stderr, "Semantic error on line %zu: operation '"SV_FMT"' cannot be performed on ", op.line_number + 1, SV_ARG(op.text));
-    type_print(left);
+    type_fprint(stderr, left);
     fprintf(stderr, " and ");
-    type_print(right);
+    type_fprint(stderr, right);
     fprintf(stderr, ".\n");
 
     token_show_in_line(stderr, op);
@@ -104,7 +104,7 @@ static void sema_error_invalid_type_for_op(SemanticAnalyzer* self, Token op, Typ
     (void) self;
 
     fprintf(stderr, "Semantic error on line %zu: operation '"SV_FMT"' cannot be performed on ", op.line_number + 1, SV_ARG(op.text));
-    type_print(type);
+    type_fprint(stderr, type);
     fprintf(stderr, ".\n");
 
     token_show_in_line(stderr, op);
@@ -121,6 +121,30 @@ static void sema_error_assign_to_immutable(SemanticAnalyzer* self, Token token) 
     (void) self;
 
     fprintf(stderr, "Semantic error on line %zu: cannot assign to immutable.\n", token.line_number + 1);
+    token_show_in_line(stderr, token);
+}
+
+static void sema_error_casting_non_primitives(SemanticAnalyzer* self, Token token, Type* src, Type* dst) {
+    (void) self;
+
+    fprintf(stderr, "Semantic error on line %zu: casting is only supported between primitive types, not between ", token.line_number + 1);
+    type_fprint(stderr, src);
+    fprintf(stderr, " and ");
+    type_fprint(stderr, dst);
+    fprintf(stderr, ".\n");
+
+    token_show_in_line(stderr, token);
+}
+
+static void sema_error_casting(SemanticAnalyzer* self, Token token, BasicType* src, BasicType* dst) {
+    (void) self;
+
+    fprintf(stderr, "Semantic error on line %zu: cannot cast from ", token.line_number + 1);
+    type_fprint(stderr, (Type*) src);
+    fprintf(stderr, " to ");
+    type_fprint(stderr, (Type*) dst);
+    fprintf(stderr, ".\n");
+
     token_show_in_line(stderr, token);
 }
 
@@ -251,6 +275,66 @@ static bool analyze_expr(SemanticAnalyzer* self, ExprNode* expr, TypeAndMutabili
             }
 
             *out = left;
+            return true;
+        }
+        case EXPR_NODE_CAST: {
+            TypeAndMutability src;
+            if (!analyze_expr(self, expr->as.cast.expr, &src)) return false;
+
+            Type* dst = analyze_type(self, expr->as.cast.type);
+            if (!dst) return false;
+
+            if (!src.type || src.type->type != TYPE_BASIC || dst->type != TYPE_BASIC) {
+                sema_error_casting_non_primitives(self, expr->as.cast.token, src.type, dst);
+                return false;
+            }
+
+            BasicType* src_type = (BasicType*) src.type;
+            BasicType* dst_type = (BasicType*) dst;
+
+            switch (src_type->type) {
+                case BASIC_TYPE_INT: {
+                    if (dst_type->type != BASIC_TYPE_INT && dst_type->type != BASIC_TYPE_FLOAT && dst_type->type != BASIC_TYPE_CHAR) {
+                        sema_error_casting(self, expr->as.cast.token, src_type, dst_type);
+                        return false;
+                    }
+                } break;
+                case BASIC_TYPE_FLOAT: {
+                    if (dst_type->type != BASIC_TYPE_INT && dst_type->type != BASIC_TYPE_FLOAT) {
+                        sema_error_casting(self, expr->as.cast.token, src_type, dst_type);
+                        return false;
+                    }
+                } break;
+                case BASIC_TYPE_BOOL: {
+                    if (dst_type->type != BASIC_TYPE_INT && dst_type->type != BASIC_TYPE_BOOL) {
+                        sema_error_casting(self, expr->as.cast.token, src_type, dst_type);
+                        return false;
+                    }
+                } break;
+                case BASIC_TYPE_CHAR: {
+                    if (dst_type->type != BASIC_TYPE_INT && dst_type->type != BASIC_TYPE_CHAR) {
+                        sema_error_casting(self, expr->as.cast.token, src_type, dst_type);
+                        return false;
+                    }
+                } break;
+            }
+
+            switch (dst_type->type) {
+                case BASIC_TYPE_INT: {
+                    expr->as.cast.cast_opcode = OP_CAST_INT;
+                } break;
+                case BASIC_TYPE_FLOAT: {
+                    expr->as.cast.cast_opcode = OP_CAST_FLOAT;
+                } break;
+                case BASIC_TYPE_BOOL: {
+                    expr->as.cast.cast_opcode = OP_CAST_BOOL;
+                } break;
+                case BASIC_TYPE_CHAR: {
+                    expr->as.cast.cast_opcode = OP_CAST_CHAR;
+                } break;
+            }
+
+            *out = from_type(dst, false);
             return true;
         }
         case EXPR_NODE_ASSIGNMENT: {

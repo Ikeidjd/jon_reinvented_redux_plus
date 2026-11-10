@@ -47,6 +47,8 @@ static Precedence prec_from(TokenType tt) {
         case TT_DIV:
         case TT_MOD:
             return PREC_MUL;
+        case TT_KW_AS:
+            return PREC_CAST;
         default:
             return PREC_NONE;
     }
@@ -63,6 +65,7 @@ static Associativity prec_get_associativity(Precedence prec) {
         case PREC_BIT_SHIFT:
         case PREC_ADD:
         case PREC_MUL:
+        case PREC_CAST:
         case PREC_UNARY_PREFIX:
             return ASS_LEFT;
         case PREC_ASSIGN:
@@ -326,6 +329,22 @@ static ExprNode* parse_prec(Parser* self, Precedence prev_prec) {
         Token op = parser_cur(self);
         parser_advance(self);
 
+        if (op.type == TT_KW_AS) {
+            TypeNode* type = parse_type(self);
+            if (!type) return NULL;
+
+            lhs = parser_new_expr(self, (ExprNode) {
+                .type = EXPR_NODE_CAST,
+                .as.cast = {
+                    .token = op,
+                    .expr = lhs,
+                    .type = type,
+                },
+            });
+
+            continue;
+        }
+
         ExprNode* rhs = parse_prec(self, next_prec);
         if (!rhs) return NULL;
 
@@ -343,8 +362,6 @@ static ExprNode* parse_prec(Parser* self, Precedence prev_prec) {
         }
 
         BinOpType bin_op_type;
-        LogicalOpType logical_op_type;
-
         if (tt_to_bin_op_type(op.type, &bin_op_type)) {
             lhs = parser_new_expr(self, (ExprNode) {
                 .type = EXPR_NODE_BIN_OP,
@@ -355,7 +372,12 @@ static ExprNode* parse_prec(Parser* self, Precedence prev_prec) {
                     .right = rhs,
                 },
             });
-        } else if (tt_to_logical_op_type(op.type, &logical_op_type)) {
+
+            continue;
+        }
+
+        LogicalOpType logical_op_type;
+        if (tt_to_logical_op_type(op.type, &logical_op_type)) {
             lhs = parser_new_expr(self, (ExprNode) {
                 .type = EXPR_NODE_LOGICAL_OP,
                 .as.logical_op = {
@@ -365,10 +387,12 @@ static ExprNode* parse_prec(Parser* self, Precedence prev_prec) {
                     .right = rhs,
                 },
             });
-        } else {
-            fprintf(stderr, "Invalid binary or logical operator %s. This should never happen.\n", tt_error_message_name(op.type));
-            assert(false && "Invalid binary or logical operator");
+
+            continue;
         }
+
+        fprintf(stderr, "Invalid binary or logical operator %s. This should never happen.\n", tt_error_message_name(op.type));
+        assert(false && "Invalid binary or logical operator");
     }
 
     return lhs;
@@ -540,6 +564,21 @@ static void parser_error(Parser* self, const char* fmt, ...) {
     fprintf(stderr, ".\n");
 
     token_show_in_line(stderr, parser_cur(self));
+
+    va_end(args);
+}
+
+static void parser_error_at(Parser* self, Token token, const char* fmt, ...) {
+    (void) self;
+
+    va_list args;
+    va_start(args, fmt);
+
+    fprintf(stderr, "Syntax error on line %zu: ", token.line_number + 1);
+    vfprintf(stderr, fmt, args);
+    fprintf(stderr, ".\n");
+
+    token_show_in_line(stderr, token);
 
     va_end(args);
 }

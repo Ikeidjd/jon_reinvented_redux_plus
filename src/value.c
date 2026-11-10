@@ -166,6 +166,84 @@ MAKE_VALUE_UNARY_OP_INT_AND_FLOAT(negate, -)
 MAKE_VALUE_UNARY_OP_INT(bit_not, ~)
 MAKE_VALUE_UNARY_OP_BOOL(not, !)
 
+Value value_cast_int(Value value) {
+    switch (value.type) {
+        case VALUE_INT:
+            return value;
+        case VALUE_FLOAT:
+            return (Value) {
+                .type = VALUE_INT,
+                .as.integer = value.as.floating > (f64) INT64_MAX ? INT64_MAX : value.as.floating < INT64_MIN ? INT64_MIN : (i64) value.as.floating,
+            };
+        case VALUE_BOOL:
+            return (Value) {
+                .type = VALUE_INT,
+                .as.integer = (i64) value.as.boolean,
+            };
+        case VALUE_CHAR:
+            return (Value) {
+                .type = VALUE_INT,
+                .as.integer = (i64) value.as.character,
+            };
+    }
+
+    assert(false && "Unreachable");
+}
+
+Value value_cast_float(Value value) {
+    switch (value.type) {
+        case VALUE_INT:
+            return (Value) {
+                .type = VALUE_FLOAT,
+                .as.floating = (f64) value.as.integer,
+            };
+        case VALUE_FLOAT:
+            return value;
+        case VALUE_BOOL:
+            assert(false && "Can't cast bool to float");
+        case VALUE_CHAR:
+            assert(false && "Can't cast char to float");
+    }
+
+    assert(false && "Unreachable");
+}
+
+Value value_cast_bool(Value value) {
+    switch (value.type) {
+        case VALUE_INT:
+            return (Value) {
+                .type = VALUE_BOOL,
+                .as.boolean = (bool) value.as.integer,
+            };
+        case VALUE_FLOAT:
+            assert(false && "Can't cast float to bool");
+        case VALUE_BOOL:
+            return value;
+        case VALUE_CHAR:
+            assert(false && "Can't cast char to bool");
+    }
+
+    assert(false && "Unreachable");
+}
+
+Value value_cast_char(Value value) {
+    switch (value.type) {
+        case VALUE_INT:
+            return (Value) {
+                .type = VALUE_CHAR,
+                .as.character = (char) value.as.integer,
+            };
+        case VALUE_FLOAT:
+            assert(false && "Can't cast float to char");
+        case VALUE_BOOL:
+            assert(false && "Can't cast bool to char");
+        case VALUE_CHAR:
+            return value;
+    }
+
+    assert(false && "Unreachable");
+}
+
 void value_fprint(FILE* file, Value value) {
     switch (value.type) {
         case VALUE_INT: {

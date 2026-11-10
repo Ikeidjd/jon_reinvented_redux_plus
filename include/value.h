@@ -45,6 +45,11 @@ Value value_negate(Value value);
 Value value_bit_not(Value value);
 Value value_not(Value value);
 
+Value value_cast_int(Value value);
+Value value_cast_float(Value value);
+Value value_cast_bool(Value value);
+Value value_cast_char(Value value);
+
 void value_fprint(FILE* file, Value value);
 PRINT_GEN_ALL(Value, value)
 

@@ -126,6 +126,10 @@ static void compile_expr(Compiler* self, ExprNode* expr) {
 
             chunk_patch_jump(&self->chunk, jump_op_index);
         } break;
+        case EXPR_NODE_CAST: {
+            compile_expr(self, expr->as.cast.expr);
+            chunk_emit(&self->chunk, expr->as.cast.cast_opcode, expr->as.cast.token.line_number);
+        } break;
         case EXPR_NODE_ASSIGNMENT: {
             compile_expr(self, expr->as.assignment.right);
             compile_expr_lvalue(self, expr->as.assignment.left, expr->as.assignment.token.line_number);
