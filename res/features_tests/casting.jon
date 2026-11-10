@@ -18,8 +18,9 @@ true as bool; # true
 # Wrap-around may happen when casting from int to char
 (67 + 0x100) as char; # 'C'
 
-# Unary minus has a higher precedence, so it runs first, as in '(-189) as char', instead of last, as in '-(189 as char)', which would give a type error
--189 as char; # 'C'
+# Unary minus has a higher precedence, so it runs first, as in '(- 189) as char', instead of last, as in '-(189 as char)', which would give a type error
+# Update: unary minus is now part of an integer or float literal if they are written together, so a space is needed to test this precedence
+- 189 as char; # 'C'
 
 # float might turn into the int limit if it's out of bounds
  100000000000000000000.0 as int; #  9223372036854775807, since that is the max int value

@@ -1,0 +1,17 @@
+# Works fine
+9223372036854775807;
+
+# Fails (too large)
+# 9223372036854775808;
+
+# Before, this would have been interpreted as -(9223372036854775808), making it fail
+# Now, unary minus is part of the literal, so it works
+-9223372036854775808;
+
+# This does fail, though, of course
+# -9223372036854775809;
+
+# This is also the case with other base literals
+-0xFF;
+-0o1234;
+-0b1010;

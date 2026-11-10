@@ -403,20 +403,27 @@ static ExprNode* parse_prefix_expr(Parser* self) {
         case TT_INT: {
             Token token = parser_cur(self);
 
+            bool negative = false;
             StringView number_text = token.text;
-            i64 i;
-            bool (*sv_to_int)(StringView sv, i64 *out) = sv_to_i64;
 
-            if (token.text.length > 2) {
-                StringView prefix = sv_slice_until(token.text, 2);
-                StringView possible_number_text = sv_slice_from(token.text, 2);
+            if (number_text.data[0] == '-') {
+                negative = true;
+                number_text = sv_slice_from(number_text, 1);
+            }
+
+            u64 unsigned_integer;
+            SvToIntResult (*sv_to_int)(StringView sv, u64* out) = sv_to_u64;
+
+            if (number_text.length > 2) {
+                StringView prefix = sv_slice_until(number_text, 2);
+                StringView possible_number_text = sv_slice_from(number_text, 2);
 
                 if (sv_eq_cstr(prefix, "0x")) {
-                    sv_to_int = sv_hex_to_i64;
+                    sv_to_int = sv_hex_to_u64;
                 } else if (sv_eq_cstr(prefix, "0o")) {
-                    sv_to_int = sv_oct_to_i64;
+                    sv_to_int = sv_oct_to_u64;
                 } else if (sv_eq_cstr(prefix, "0b")) {
-                    sv_to_int = sv_bin_to_i64;
+                    sv_to_int = sv_bin_to_u64;
                 } else {
                     possible_number_text = number_text;
                 }
@@ -424,10 +431,16 @@ static ExprNode* parse_prefix_expr(Parser* self) {
                 number_text = possible_number_text;
             }
 
-            if (!sv_to_int(number_text, &i)) {
+            SvToIntResult result = sv_to_int(number_text, &unsigned_integer);
+            assert(result != SV_TO_INT_INVALID_DIGIT && "Invalid digits should have been caught earlier");
+
+            if (result == SV_TO_INT_TOO_LARGE || unsigned_integer > (u64) INT64_MAX + 1 || (!negative && unsigned_integer > INT64_MAX)) {
                 parser_error(self, "integer "SV_FMT" too large to fit in range", SV_ARG(token.text));
                 return NULL;
             }
+
+            i64 integer = (i64) unsigned_integer;
+            if (negative) integer = -integer;
 
             parser_advance(self);
 
@@ -435,7 +448,7 @@ static ExprNode* parse_prefix_expr(Parser* self) {
                 .type = EXPR_NODE_INT,
                 .as.literal = {
                     .token = token,
-                    .as.integer = i,
+                    .as.integer = integer,
                 },
             });
         }

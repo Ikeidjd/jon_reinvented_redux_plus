@@ -66,6 +66,7 @@ static bool lexer_next(Lexer* self, Token* out) {
         } break;
         case '-': {
             tt = TT_MINUS;
+            if (is_ascii_digit(lexer_peek(self)) && !lexer_skip_number(self, &tt, lexer_advance(self))) return false;
         } break;
         case '*': {
             tt = TT_TIMES;

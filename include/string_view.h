@@ -35,12 +35,18 @@ bool sv_eq(StringView a, StringView b);
 
 bool sv_eq_cstr(StringView sv, const char* cstr);
 
-bool sv_to_i64(StringView sv, i64* out);
+typedef enum {
+    SV_TO_INT_OK,
+    SV_TO_INT_INVALID_DIGIT,
+    SV_TO_INT_TOO_LARGE,
+} SvToIntResult;
 
-bool sv_hex_to_i64(StringView sv, i64* out);
+SvToIntResult sv_to_u64(StringView sv, u64* out);
 
-bool sv_oct_to_i64(StringView sv, i64* out);
+SvToIntResult sv_hex_to_u64(StringView sv, u64* out);
 
-bool sv_bin_to_i64(StringView sv, i64* out);
+SvToIntResult sv_oct_to_u64(StringView sv, u64* out);
+
+SvToIntResult sv_bin_to_u64(StringView sv, u64* out);
 
 bool sv_to_f64(StringView sv, f64* out);
