@@ -163,12 +163,23 @@ static u8 chunk_get_u8(Chunk self, size_t offset) {
     return self.bytes.data[offset];
 }
 
+#define MAKE_CHUNK_DISASSEMBLE_LE_SIGNED_INT(bits) \
+static void chunk_disassemble_le_i ## bits(Chunk self, size_t* offset) { \
+    i ## bits value = (i ## bits) from_le_u ## bits(self.bytes.data + *offset); \
+    printf(I ## bits ## _FMT, value); \
+    *offset += sizeof(value); \
+}
+
 #define MAKE_CHUNK_DISASSEMBLE_LE(type, fmt) \
 static void chunk_disassemble_le_ ## type(Chunk self, size_t* offset) { \
     type value = from_le_ ## type(self.bytes.data + *offset); \
     printf(fmt, value); \
     *offset += sizeof(value); \
 }
+
+MAKE_CHUNK_DISASSEMBLE_LE_SIGNED_INT(64)
+MAKE_CHUNK_DISASSEMBLE_LE_SIGNED_INT(32)
+MAKE_CHUNK_DISASSEMBLE_LE_SIGNED_INT(16)
 
 MAKE_CHUNK_DISASSEMBLE_LE(u64, U64_FMT)
 MAKE_CHUNK_DISASSEMBLE_LE(u32, U32_FMT)
@@ -211,7 +222,7 @@ static void _chunk_disassemble_one(Chunk self, size_t* offset) {
         case OP_LOAD_INT: {
             chunk_disassemble_simple(self, offset);
             printf(" ");
-            chunk_disassemble_le_u64(self, offset);
+            chunk_disassemble_le_i64(self, offset);
         } break;
         case OP_LOAD_FLOAT: {
             chunk_disassemble_simple(self, offset);
