@@ -76,13 +76,13 @@ static bool lexer_next(Lexer* self, Token* out) {
             tt = TT_MOD;
         } break;
         case '&': {
-            tt = TT_AND;
+            tt = lexer_matches(self, '&') ? TT_ANDAND : TT_AND;
         } break;
         case '^': {
             tt = TT_XOR;
         } break;
         case '|': {
-            tt = TT_OR;
+            tt = lexer_matches(self, '|') ? TT_OROR : TT_OR;
         } break;
         case '<': {
             tt = lexer_matches(self, '<') ? TT_LTLT : lexer_matches(self, '=') ? TT_LTEQ : TT_LT;
@@ -94,8 +94,7 @@ static bool lexer_next(Lexer* self, Token* out) {
             tt = TT_TILDE;
         } break;
         case '!': {
-            if (!lexer_matches(self, '=')) goto InvalidCharacter;
-            tt = TT_BANG_EQ;
+            tt = lexer_matches(self, '=') ? TT_BANG_EQ : TT_BANG;
         } break;
         case '=': {
             tt = lexer_matches(self, '=') ? TT_EQEQ : TT_EQ;

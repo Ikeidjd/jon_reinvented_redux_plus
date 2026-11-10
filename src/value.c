@@ -143,8 +143,28 @@ Value value_ ## op_name(Value value) { \
     assert(false && "Unreachable"); \
 }
 
+#define MAKE_VALUE_UNARY_OP_BOOL(op_name, op_symbol) \
+Value value_ ## op_name(Value value) { \
+    switch (value.type) { \
+        case VALUE_INT: \
+            assert(false && "Can't "#op_name" int"); \
+        case VALUE_FLOAT: \
+            assert(false && "Can't "#op_name" float"); \
+        case VALUE_BOOL: \
+            return (Value) { \
+                .type = value.type, \
+                .as.boolean = op_symbol value.as.boolean, \
+            }; \
+        case VALUE_CHAR: \
+            assert(false && "Can't "#op_name" char"); \
+    } \
+\
+    assert(false && "Unreachable"); \
+}
+
 MAKE_VALUE_UNARY_OP_INT_AND_FLOAT(negate, -)
 MAKE_VALUE_UNARY_OP_INT(bit_not, ~)
+MAKE_VALUE_UNARY_OP_BOOL(not, !)
 
 void value_fprint(FILE* file, Value value) {
     switch (value.type) {

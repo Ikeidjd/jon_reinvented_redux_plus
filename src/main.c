@@ -133,7 +133,10 @@ int main(int argc, char** argv) {
     program_println(program);
     printf("SEMANTIC ANALYZER END\n\n");
 
-    Chunk chunk = compile_program(program);
+    Chunk chunk;
+    chunk_init(&chunk);
+
+    compile_program(program, &chunk);
 
     printf("COMPILER START\n");
     chunk_disassemble(chunk);
@@ -143,7 +146,7 @@ int main(int argc, char** argv) {
     execute_chunk(chunk);
     printf("EXECUTION END\n\n");
 
-    dyna_destroy(&chunk);
+    chunk_destroy(&chunk);
 
     End:
     type_arena_destroy(&arena);

@@ -17,6 +17,8 @@ static void vm_push(VM* self, Value value);
 
 static Value vm_pop(VM* self);
 
+static void vm_dup(VM* self);
+
 static Value vm_top(VM* self);
 
 static void vm_print_stack(VM* self);

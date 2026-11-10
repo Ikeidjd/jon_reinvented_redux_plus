@@ -11,3 +11,21 @@ true || true;
 
 !false;
 !true;
+
+# Precedence
+false && true || true && false || true;
+# This is equivalent to
+((false && true) || (true && false)) || true;
+
+# The other types don't support them
+# 0 && 0;
+# 0 || 0;
+# !0;
+
+# 0.0 && 0.0;
+# 0.0 || 0.0;
+# !0.0;
+
+# 'a' && 'a';
+# 'a' || 'a';
+# !'a';

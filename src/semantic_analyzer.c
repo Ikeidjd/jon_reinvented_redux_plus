@@ -91,7 +91,7 @@ static void sema_error_incompatible_types(SemanticAnalyzer* self, Token token, T
 static void sema_error_invalid_types_for_op(SemanticAnalyzer* self, Token op, Type* left, Type* right) {
     (void) self;
 
-    fprintf(stderr, "Semantic error on line %zu: operation '"SV_FMT"' can not be performed on ", op.line_number + 1, SV_ARG(op.text));
+    fprintf(stderr, "Semantic error on line %zu: operation '"SV_FMT"' cannot be performed on ", op.line_number + 1, SV_ARG(op.text));
     type_print(left);
     fprintf(stderr, " and ");
     type_print(right);
@@ -103,7 +103,7 @@ static void sema_error_invalid_types_for_op(SemanticAnalyzer* self, Token op, Ty
 static void sema_error_invalid_type_for_op(SemanticAnalyzer* self, Token op, Type* type) {
     (void) self;
 
-    fprintf(stderr, "Semantic error on line %zu: operation '"SV_FMT"' can not be performed on ", op.line_number + 1, SV_ARG(op.text));
+    fprintf(stderr, "Semantic error on line %zu: operation '"SV_FMT"' cannot be performed on ", op.line_number + 1, SV_ARG(op.text));
     type_print(type);
     fprintf(stderr, ".\n");
 
@@ -233,6 +233,26 @@ static bool analyze_expr(SemanticAnalyzer* self, ExprNode* expr, TypeAndMutabili
             *out = left;
             return true;
         }
+        case EXPR_NODE_LOGICAL_OP: {
+            TypeAndMutability left;
+            if (!analyze_expr(self, expr->as.logical_op.left, &left)) return false;
+
+            TypeAndMutability right;
+            if (!analyze_expr(self, expr->as.logical_op.right, &right)) return false;
+
+            if (left.type != (Type*) basic_type_new(&self->arena, BASIC_TYPE_BOOL)) {
+                sema_error_invalid_types_for_op(self, expr->as.logical_op.token, left.type, right.type);
+                return false;
+            }
+
+            if (left.type != right.type) {
+                sema_error_incompatible_types(self, expr->as.logical_op.token, left.type, right.type);
+                return false;
+            }
+
+            *out = left;
+            return true;
+        }
         case EXPR_NODE_ASSIGNMENT: {
             TypeAndMutability left;
             if (!analyze_expr(self, expr->as.assignment.left, &left)) return false;
@@ -269,6 +289,12 @@ static bool analyze_expr(SemanticAnalyzer* self, ExprNode* expr, TypeAndMutabili
                 } break;
                 case UNARY_BIT_NOT: {
                     if (operand.type != int_type) {
+                        sema_error_invalid_type_for_op(self, expr->as.bin_op.token, operand.type);
+                        return false;
+                    }
+                } break;
+                case UNARY_NOT: {
+                    if (operand.type != (Type*) basic_type_new(&self->arena, BASIC_TYPE_BOOL)) {
                         sema_error_invalid_type_for_op(self, expr->as.bin_op.token, operand.type);
                         return false;
                     }

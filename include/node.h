@@ -23,6 +23,7 @@ typedef enum {
     EXPR_NODE_VAR,
     EXPR_NODE_UNARY_OP,
     EXPR_NODE_BIN_OP,
+    EXPR_NODE_LOGICAL_OP,
     EXPR_NODE_ASSIGNMENT,
 } ExprNodeType;
 
@@ -67,6 +68,18 @@ typedef struct {
     ExprNode* right;
 } BinOpNode;
 
+typedef enum {
+    LOG_AND,
+    LOG_OR,
+} LogicalOpType;
+
+typedef struct {
+    LogicalOpType type;
+    Token token;
+    ExprNode* left;
+    ExprNode* right;
+} LogicalOpNode;
+
 typedef struct {
     Token token;
     ExprNode* left;
@@ -76,6 +89,7 @@ typedef struct {
 typedef enum {
     UNARY_NEGATE,
     UNARY_BIT_NOT,
+    UNARY_NOT,
 } UnaryOpType;
 
 typedef struct {
@@ -89,6 +103,7 @@ struct ExprNode {
         LiteralNode literal;
         VarNode var;
         BinOpNode bin_op;
+        LogicalOpNode logical_op;
         AssignmentNode assignment;
         UnaryOpNode unary_op;
     } as;

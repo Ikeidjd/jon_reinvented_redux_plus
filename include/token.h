@@ -21,8 +21,11 @@ typedef enum {
     TT_OR,
     TT_LTLT,
     TT_GTGT,
-
     TT_TILDE,
+
+    TT_ANDAND,
+    TT_OROR,
+    TT_BANG,
 
     TT_EQEQ,
     TT_BANG_EQ,

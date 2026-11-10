@@ -3,26 +3,23 @@
 
 #include <assert.h>
 
-Chunk compile_program(Program program) {
-    Compiler self;
-    compiler_init(&self);
+void compile_program(Program program, Chunk* chunk) {
+    Compiler self = {
+        .chunk = *chunk,
+    };
 
     for (size_t i = 0; i < program.length; i++) {
         compile_node(&self, program.data[i]);
     }
 
-    return self.chunk;
-}
-
-static void compiler_init(Compiler* self) {
-    dyna_init(&self->chunk);
+    *chunk = self.chunk;
 }
 
 static void compile_node(Compiler* self, Node* node) {
     switch (node->type) {
         case NODE_EXPR: {
             compile_expr(self, &node->as.expr);
-            chunk_emit(&self->chunk, OP_POP);
+            chunk_emit(&self->chunk, OP_POP, self->chunk.lines.data[self->chunk.lines.length - 1]);
         } break;
         case NODE_DECL: {
             compile_decl(self, &node->as.decl);
@@ -72,12 +69,25 @@ static Opcode bin_op_type_to_opcode(BinOpType type) {
     assert(false && "Unreachable");
 }
 
+static Opcode logical_op_type_to_jump(LogicalOpType type) {
+    switch (type) {
+        case LOG_AND:
+            return OP_JUMP_IF_FALSE;
+        case LOG_OR:
+            return OP_JUMP_IF_TRUE;
+    }
+
+    assert(false && "Unreachable");
+}
+
 static Opcode unary_op_type_to_opcode(UnaryOpType type) {
     switch (type) {
         case UNARY_NEGATE:
             return OP_NEGATE;
         case UNARY_BIT_NOT:
             return OP_BIT_NOT;
+        case UNARY_NOT:
+            return OP_NOT;
     }
 
     assert(false && "Unreachable");
@@ -86,39 +96,50 @@ static Opcode unary_op_type_to_opcode(UnaryOpType type) {
 static void compile_expr(Compiler* self, ExprNode* expr) {
     switch (expr->type) {
         case EXPR_NODE_INT: {
-            chunk_emit_load_int(&self->chunk, expr->as.literal.as.integer);
+            chunk_emit_load_int(&self->chunk, expr->as.literal.as.integer, expr->as.literal.token.line_number);
         } break;
         case EXPR_NODE_FLOAT: {
-            chunk_emit_load_float(&self->chunk, expr->as.literal.as.floating);
+            chunk_emit_load_float(&self->chunk, expr->as.literal.as.floating, expr->as.literal.token.line_number);
         } break;
         case EXPR_NODE_BOOL: {
-            chunk_emit_load_bool(&self->chunk, expr->as.literal.as.boolean);
+            chunk_emit_load_bool(&self->chunk, expr->as.literal.as.boolean, expr->as.literal.token.line_number);
         } break;
         case EXPR_NODE_CHAR: {
-            chunk_emit_load_char(&self->chunk, expr->as.literal.as.character);
+            chunk_emit_load_char(&self->chunk, expr->as.literal.as.character, expr->as.literal.token.line_number);
         } break;
         case EXPR_NODE_VAR: {
-            chunk_emit_get_local(&self->chunk, expr->as.var.stack_index);
+            chunk_emit_get_local(&self->chunk, expr->as.var.stack_index, expr->as.var.token.line_number);
         } break;
         case EXPR_NODE_BIN_OP: {
             compile_expr(self, expr->as.bin_op.left);
             compile_expr(self, expr->as.bin_op.right);
-            chunk_emit(&self->chunk, bin_op_type_to_opcode(expr->as.bin_op.type));
+            chunk_emit(&self->chunk, bin_op_type_to_opcode(expr->as.bin_op.type), expr->as.bin_op.token.line_number);
+        } break;
+        case EXPR_NODE_LOGICAL_OP: {
+            compile_expr(self, expr->as.logical_op.left);
+            chunk_emit(&self->chunk, OP_DUP, expr->as.logical_op.token.line_number);
+
+            size_t jump_op_index = chunk_emit_jump(&self->chunk, logical_op_type_to_jump(expr->as.logical_op.type), expr->as.logical_op.token.line_number);
+
+            chunk_emit(&self->chunk, OP_POP, expr->as.logical_op.token.line_number);
+            compile_expr(self, expr->as.logical_op.right);
+
+            chunk_patch_jump(&self->chunk, jump_op_index);
         } break;
         case EXPR_NODE_ASSIGNMENT: {
             compile_expr(self, expr->as.assignment.right);
-            compile_expr_lvalue(self, expr->as.assignment.left);
+            compile_expr_lvalue(self, expr->as.assignment.left, expr->as.assignment.token.line_number);
         } break;
         case EXPR_NODE_UNARY_OP: {
             compile_expr(self, expr->as.unary_op.operand);
-            chunk_emit(&self->chunk, unary_op_type_to_opcode(expr->as.unary_op.type));
+            chunk_emit(&self->chunk, unary_op_type_to_opcode(expr->as.unary_op.type), expr->as.unary_op.token.line_number);
         } break;
     }
 }
 
-static void compile_expr_lvalue(Compiler* self, ExprNode* expr) {
+static void compile_expr_lvalue(Compiler* self, ExprNode* expr, size_t line) {
     assert(expr->type == EXPR_NODE_VAR);
-    chunk_emit_set_local(&self->chunk, expr->as.var.stack_index);
+    chunk_emit_set_local(&self->chunk, expr->as.var.stack_index, line);
 }
 
 static void compile_decl(Compiler* self, DeclNode* decl) {

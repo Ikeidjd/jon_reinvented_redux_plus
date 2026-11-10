@@ -24,8 +24,8 @@ typedef enum {
     OP_GE,
 
     OP_NEGATE,
-
     OP_BIT_NOT,
+    OP_NOT,
 
     OP_LOAD_INT,
     OP_LOAD_FLOAT,
@@ -36,27 +36,43 @@ typedef enum {
     OP_SET_LOCAL,
 
     OP_POP,
+    OP_DUP,
+
+    OP_JUMP,
+    OP_JUMP_IF_TRUE,
+    OP_JUMP_IF_FALSE,
 } Opcode;
 
 const char* opcode_to_string(Opcode opcode);
 
-typedef DynamicArray(u8) Chunk;
+typedef struct {
+    DynamicArray(u8) bytes;
+    DynamicArray(size_t) lines;
+} Chunk;
 
-void chunk_emit(Chunk* self, Opcode opcode);
+void chunk_init(Chunk* self);
 
-void chunk_emit_args(Chunk* self, Opcode opcode, size_t n, u8 args[n]);
+void chunk_destroy(Chunk* self);
 
-void chunk_emit_load_int(Chunk* self, i64 i);
+void chunk_emit(Chunk* self, Opcode opcode, size_t line);
 
-void chunk_emit_load_float(Chunk* self, f64 d);
+void chunk_emit_args(Chunk* self, Opcode opcode, size_t n, u8 args[n], size_t line);
 
-void chunk_emit_load_bool(Chunk* self, bool b);
+void chunk_emit_load_int(Chunk* self, i64 i, size_t line);
 
-void chunk_emit_load_char(Chunk* self, char c);
+void chunk_emit_load_float(Chunk* self, f64 d, size_t line);
 
-void chunk_emit_get_local(Chunk* self, u16 index);
+void chunk_emit_load_bool(Chunk* self, bool b, size_t line);
 
-void chunk_emit_set_local(Chunk* self, u16 index);
+void chunk_emit_load_char(Chunk* self, char c, size_t line);
+
+void chunk_emit_get_local(Chunk* self, u16 index, size_t line);
+
+void chunk_emit_set_local(Chunk* self, u16 index, size_t line);
+
+size_t chunk_emit_jump(Chunk* self, Opcode opcode, size_t line);
+
+void chunk_patch_jump(Chunk* self, size_t index);
 
 void chunk_disassemble_one(Chunk self, size_t offset);
 

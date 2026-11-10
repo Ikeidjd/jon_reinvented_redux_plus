@@ -3,4 +3,4 @@
 #include "node.h"
 #include "bytecode.h"
 
-Chunk compile_program(Program program);
+void compile_program(Program program, Chunk* chunk);

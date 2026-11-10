@@ -20,6 +20,10 @@ static Precedence prec_from(TokenType tt) {
     switch (tt) {
         case TT_EQ:
             return PREC_ASSIGN;
+        case TT_OROR:
+            return PREC_OR;
+        case TT_ANDAND:
+            return PREC_AND;
         case TT_EQEQ:
         case TT_BANG_EQ:
         case TT_LT:
@@ -52,6 +56,8 @@ static Associativity prec_get_associativity(Precedence prec) {
     switch (prec) {
         case PREC_NONE:
         case PREC_BIT_OR:
+        case PREC_OR:
+        case PREC_AND:
         case PREC_BIT_XOR:
         case PREC_BIT_AND:
         case PREC_BIT_SHIFT:
@@ -211,44 +217,78 @@ static DeclNode* parse_decl(Parser* self) {
     });
 }
 
-static BinOpType tt_to_bin_op_type(TokenType tt) {
+static bool tt_to_bin_op_type(TokenType tt, BinOpType* out) {
     switch (tt) {
-        case TT_PLUS:
-            return BIN_ADD;
-        case TT_MINUS:
-            return BIN_SUB;
-        case TT_TIMES:
-            return BIN_MUL;
-        case TT_DIV:
-            return BIN_DIV;
-        case TT_MOD:
-            return BIN_MOD;
-        case TT_AND:
-            return BIN_BIT_AND;
-        case TT_XOR:
-            return BIN_BIT_XOR;
-        case TT_OR:
-            return BIN_BIT_OR;
-        case TT_LTLT:
-            return BIN_BIT_LSHIFT;
-        case TT_GTGT:
-            return BIN_BIT_RSHIFT;
-        case TT_EQEQ:
-            return BIN_EQ;
-        case TT_BANG_EQ:
-            return BIN_NE;
-        case TT_LT:
-            return BIN_LT;
-        case TT_LTEQ:
-            return BIN_LE;
-        case TT_GT:
-            return BIN_GT;
-        case TT_GTEQ:
-            return BIN_GE;
-        default:
-            fprintf(stderr, "Invalid binary operator %s. This should never happen.\n", tt_error_message_name(tt));
-            assert(false && "Invalid binary operator");
+        case TT_PLUS: {
+            *out = BIN_ADD;
+        } break;
+        case TT_MINUS: {
+            *out = BIN_SUB;
+        } break;
+        case TT_TIMES: {
+            *out = BIN_MUL;
+        } break;
+        case TT_DIV: {
+            *out = BIN_DIV;
+        } break;
+        case TT_MOD: {
+            *out = BIN_MOD;
+        } break;
+        case TT_AND: {
+            *out = BIN_BIT_AND;
+        } break;
+        case TT_XOR: {
+            *out = BIN_BIT_XOR;
+        } break;
+        case TT_OR: {
+            *out = BIN_BIT_OR;
+        } break;
+        case TT_LTLT: {
+            *out = BIN_BIT_LSHIFT;
+        } break;
+        case TT_GTGT: {
+            *out = BIN_BIT_RSHIFT;
+        } break;
+        case TT_EQEQ: {
+            *out = BIN_EQ;
+        } break;
+        case TT_BANG_EQ: {
+            *out = BIN_NE;
+        } break;
+        case TT_LT: {
+            *out = BIN_LT;
+        } break;
+        case TT_LTEQ: {
+            *out = BIN_LE;
+        } break;
+        case TT_GT: {
+            *out = BIN_GT;
+        } break;
+        case TT_GTEQ: {
+            *out = BIN_GE;
+        } break;
+        default: {
+            return false;
+        }
     }
+
+    return true;
+}
+
+static bool tt_to_logical_op_type(TokenType tt, LogicalOpType* out) {
+    switch (tt) {
+        case TT_ANDAND: {
+            *out = LOG_AND;
+        } break;
+        case TT_OROR: {
+            *out = LOG_OR;
+        } break;
+        default: {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 static UnaryOpType tt_to_unary_op_type(TokenType tt) {
@@ -257,6 +297,8 @@ static UnaryOpType tt_to_unary_op_type(TokenType tt) {
             return UNARY_NEGATE;
         case TT_TILDE:
             return UNARY_BIT_NOT;
+        case TT_BANG:
+            return UNARY_NOT;
         default:
             fprintf(stderr, "Invalid unary operator %s. This should never happen.\n", tt_error_message_name(tt));
             assert(false && "Invalid unary operator");
@@ -300,15 +342,33 @@ static ExprNode* parse_prec(Parser* self, Precedence prev_prec) {
             continue;
         }
 
-        lhs = parser_new_expr(self, (ExprNode) {
-            .type = EXPR_NODE_BIN_OP,
-            .as.bin_op = {
-                .type = tt_to_bin_op_type(op.type),
-                .token = op,
-                .left = lhs,
-                .right = rhs,
-            },
-        });
+        BinOpType bin_op_type;
+        LogicalOpType logical_op_type;
+
+        if (tt_to_bin_op_type(op.type, &bin_op_type)) {
+            lhs = parser_new_expr(self, (ExprNode) {
+                .type = EXPR_NODE_BIN_OP,
+                .as.bin_op = {
+                    .type = bin_op_type,
+                    .token = op,
+                    .left = lhs,
+                    .right = rhs,
+                },
+            });
+        } else if (tt_to_logical_op_type(op.type, &logical_op_type)) {
+            lhs = parser_new_expr(self, (ExprNode) {
+                .type = EXPR_NODE_LOGICAL_OP,
+                .as.logical_op = {
+                    .type = logical_op_type,
+                    .token = op,
+                    .left = lhs,
+                    .right = rhs,
+                },
+            });
+        } else {
+            fprintf(stderr, "Invalid binary or logical operator %s. This should never happen.\n", tt_error_message_name(op.type));
+            assert(false && "Invalid binary or logical operator");
+        }
     }
 
     return lhs;
@@ -411,7 +471,8 @@ static ExprNode* parse_prefix_expr(Parser* self) {
             });
         }
         case TT_MINUS:
-        case TT_TILDE: {
+        case TT_TILDE:
+        case TT_BANG: {
             Token token = parser_cur(self);
             parser_advance(self);
 
