@@ -163,6 +163,11 @@ static void vm_execute_chunk(VM* self, Chunk chunk) {
                     .as.integer = (char) READ_U8(),
                 });
             } break;
+            case OP_LOAD_MONOSTATE: {
+                vm_push(self, (Value) {
+                    .type = VALUE_MONOSTATE,
+                });
+            } break;
             case OP_GET_LOCAL: {
                 vm_push(self, self->stack[READ_U16()]);
             } break;
@@ -174,6 +179,11 @@ static void vm_execute_chunk(VM* self, Chunk chunk) {
             } break;
             case OP_DUP: {
                 vm_dup(self);
+            } break;
+            case OP_END_BLOCK: {
+                Value result = vm_pop(self);
+                vm_popn(self, READ_U16());
+                vm_push(self, result);
             } break;
             case OP_JUMP: {
                 ip += READ_U16() - 3;
@@ -212,6 +222,10 @@ static void vm_push(VM* self, Value value) {
 
 static Value vm_pop(VM* self) {
     return self->stack[--self->sp];
+}
+
+static void vm_popn(VM* self, u16 n) {
+    self->sp -= n;
 }
 
 static void vm_dup(VM* self) {

@@ -21,6 +21,8 @@ Value value_ ## op_name(Value a, Value b) { \
             assert(false && "Can't "#op_name" bool"); \
         case VALUE_CHAR: \
             assert(false && "Can't "#op_name" char"); \
+        case VALUE_MONOSTATE: \
+            assert(false && "Can't "#op_name" monostate"); \
     } \
 \
     assert(false && "Unreachable"); \
@@ -42,6 +44,8 @@ Value value_ ## op_name(Value a, Value b) { \
             assert(false && "Can't "#op_name" bool"); \
         case VALUE_CHAR: \
             assert(false && "Can't "#op_name" char"); \
+        case VALUE_MONOSTATE: \
+            assert(false && "Can't "#op_name" monostate"); \
     } \
 \
     assert(false && "Unreachable"); \
@@ -59,22 +63,42 @@ MAKE_VALUE_BIN_OP_INT(bit_or, |)
 MAKE_VALUE_BIN_OP_INT(bit_lshift, <<)
 MAKE_VALUE_BIN_OP_INT(bit_rshift, >>)
 
-#define MAKE_VALUE_EQ(op_name, op_symbol) \
-bool value_ ## op_name(Value a, Value b) { \
-    assert(a.type == b.type && "Values must be the same type to"#op_name); \
-\
-    switch (a.type) { \
-        case VALUE_INT: \
-            return a.as.integer op_symbol b.as.integer; \
-        case VALUE_FLOAT: \
-            return a.as.floating op_symbol b.as.floating; \
-        case VALUE_BOOL: \
-            return a.as.boolean op_symbol b.as.boolean; \
-        case VALUE_CHAR: \
-            return a.as.character op_symbol b.as.character; \
-    } \
-\
-    assert(false && "Unreachable"); \
+bool value_eq(Value a, Value b) {
+    assert(a.type == b.type && "Values must be the same type to eq");
+
+    switch (a.type) {
+        case VALUE_INT:
+            return a.as.integer == b.as.integer;
+        case VALUE_FLOAT:
+            return a.as.floating == b.as.floating;
+        case VALUE_BOOL:
+            return a.as.boolean == b.as.boolean;
+        case VALUE_CHAR:
+            return a.as.character == b.as.character;
+        case VALUE_MONOSTATE:
+            return true;
+    }
+
+    assert(false && "Unreachable");
+}
+
+bool value_ne(Value a, Value b) {
+    assert(a.type == b.type && "Values must be the same type to eq");
+
+    switch (a.type) {
+        case VALUE_INT:
+            return a.as.integer != b.as.integer;
+        case VALUE_FLOAT:
+            return a.as.floating != b.as.floating;
+        case VALUE_BOOL:
+            return a.as.boolean != b.as.boolean;
+        case VALUE_CHAR:
+            return a.as.character != b.as.character;
+        case VALUE_MONOSTATE:
+            return false;
+    }
+
+    assert(false && "Unreachable");
 }
 
 #define MAKE_VALUE_COMP(op_name, op_symbol) \
@@ -90,13 +114,13 @@ bool value_ ## op_name(Value a, Value b) { \
             assert(false && "Can't "#op_name" bool"); \
         case VALUE_CHAR: \
             return a.as.character op_symbol b.as.character; \
+        case VALUE_MONOSTATE: \
+            assert(false && "Can't "#op_name" monostate"); \
     } \
 \
     assert(false && "Unreachable"); \
 }
 
-MAKE_VALUE_EQ(eq, ==);
-MAKE_VALUE_EQ(ne, !=);
 MAKE_VALUE_COMP(lt, <);
 MAKE_VALUE_COMP(le, <=);
 MAKE_VALUE_COMP(gt, >);
@@ -119,6 +143,8 @@ Value value_ ## op_name(Value value) { \
             assert(false && "Can't "#op_name" bool"); \
         case VALUE_CHAR: \
             assert(false && "Can't "#op_name" char"); \
+        case VALUE_MONOSTATE: \
+            assert(false && "Can't "#op_name" monostate"); \
     } \
 \
     assert(false && "Unreachable"); \
@@ -138,6 +164,8 @@ Value value_ ## op_name(Value value) { \
             assert(false && "Can't "#op_name" bool"); \
         case VALUE_CHAR: \
             assert(false && "Can't "#op_name" char"); \
+        case VALUE_MONOSTATE: \
+            assert(false && "Can't "#op_name" monostate"); \
     } \
 \
     assert(false && "Unreachable"); \
@@ -157,6 +185,8 @@ Value value_ ## op_name(Value value) { \
             }; \
         case VALUE_CHAR: \
             assert(false && "Can't "#op_name" char"); \
+        case VALUE_MONOSTATE: \
+            assert(false && "Can't "#op_name" monostate"); \
     } \
 \
     assert(false && "Unreachable"); \
@@ -185,6 +215,8 @@ Value value_cast_int(Value value) {
                 .type = VALUE_INT,
                 .as.integer = (i64) value.as.character,
             };
+        case VALUE_MONOSTATE:
+            assert(false && "Can't cast monostate to int");
     }
 
     assert(false && "Unreachable");
@@ -203,6 +235,8 @@ Value value_cast_float(Value value) {
             assert(false && "Can't cast bool to float");
         case VALUE_CHAR:
             assert(false && "Can't cast char to float");
+        case VALUE_MONOSTATE:
+            assert(false && "Can't cast monostate to float");
     }
 
     assert(false && "Unreachable");
@@ -221,6 +255,8 @@ Value value_cast_bool(Value value) {
             return value;
         case VALUE_CHAR:
             assert(false && "Can't cast char to bool");
+        case VALUE_MONOSTATE:
+            assert(false && "Can't cast monostate to bool");
     }
 
     assert(false && "Unreachable");
@@ -239,6 +275,8 @@ Value value_cast_char(Value value) {
             assert(false && "Can't cast bool to char");
         case VALUE_CHAR:
             return value;
+        case VALUE_MONOSTATE:
+            assert(false && "Can't cast monostate to char");
     }
 
     assert(false && "Unreachable");
@@ -258,6 +296,9 @@ void value_fprint(FILE* file, Value value) {
         case VALUE_CHAR: {
             fprintf(file, "%c", value.as.character);
         } break;
+        case VALUE_MONOSTATE: {
+            fprintf(file, "{}");
+        } break;
     }
 }
 
@@ -274,6 +315,9 @@ void value_repr_fprint(FILE* file, Value value) {
         } break;
         case VALUE_CHAR: {
             fprintf(file, "'%c'", value.as.character);
+        } break;
+        case VALUE_MONOSTATE: {
+            fprintf(file, "{}");
         } break;
     }
 }

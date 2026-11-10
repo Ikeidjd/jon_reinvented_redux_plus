@@ -3,6 +3,8 @@
 
 #include <assert.h>
 
+#include "little_endian_utils.h"
+
 void compile_program(Program program, Chunk* chunk) {
     Compiler self = {
         .chunk = *chunk,
@@ -110,6 +112,10 @@ static void compile_expr(Compiler* self, ExprNode* expr) {
         case EXPR_NODE_VAR: {
             chunk_emit_get_local(&self->chunk, expr->as.var.stack_index, expr->as.var.token.line_number);
         } break;
+        case EXPR_NODE_UNARY_OP: {
+            compile_expr(self, expr->as.unary_op.operand);
+            chunk_emit(&self->chunk, unary_op_type_to_opcode(expr->as.unary_op.type), expr->as.unary_op.token.line_number);
+        } break;
         case EXPR_NODE_BIN_OP: {
             compile_expr(self, expr->as.bin_op.left);
             compile_expr(self, expr->as.bin_op.right);
@@ -134,9 +140,25 @@ static void compile_expr(Compiler* self, ExprNode* expr) {
             compile_expr(self, expr->as.assignment.right);
             compile_expr_lvalue(self, expr->as.assignment.left, expr->as.assignment.token.line_number);
         } break;
-        case EXPR_NODE_UNARY_OP: {
-            compile_expr(self, expr->as.unary_op.operand);
-            chunk_emit(&self->chunk, unary_op_type_to_opcode(expr->as.unary_op.type), expr->as.unary_op.token.line_number);
+        case EXPR_NODE_BLOCK: {
+            for (size_t i = 0; i < expr->as.block.nodes.length; i++) {
+                Node* node = expr->as.block.nodes.data[i];
+
+                if (i == expr->as.block.nodes.length - 1 && expr->as.block.has_value) {
+                    assert(expr->as.block.nodes.data[i]->type == NODE_EXPR);
+                    compile_expr(self, &node->as.expr);
+                } else {
+                    compile_node(self, node);
+                }
+            }
+
+            if (!expr->as.block.has_value) {
+                chunk_emit(&self->chunk, OP_LOAD_MONOSTATE, expr->as.block.rbrace.line_number);
+            }
+
+            u8 buf[2];
+            to_le_u16(expr->as.block.locals_count, buf);
+            chunk_emit_args(&self->chunk, OP_END_BLOCK, 2, buf, expr->as.block.rbrace.line_number);
         } break;
     }
 }

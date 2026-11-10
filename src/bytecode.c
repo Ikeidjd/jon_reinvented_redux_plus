@@ -61,6 +61,8 @@ const char* opcode_to_string(Opcode opcode) {
             return "OP_LOAD_BOOL";
         case OP_LOAD_CHAR:
             return "OP_LOAD_CHAR";
+        case OP_LOAD_MONOSTATE:
+            return "OP_LOAD_MONOSTATE";
         case OP_GET_LOCAL:
             return "OP_GET_LOCAL";
         case OP_SET_LOCAL:
@@ -69,6 +71,8 @@ const char* opcode_to_string(Opcode opcode) {
             return "OP_POP";
         case OP_DUP:
             return "OP_DUP";
+        case OP_END_BLOCK:
+            return "OP_END_BLOCK";
         case OP_JUMP:
             return "OP_JUMP";
         case OP_JUMP_IF_TRUE:
@@ -215,6 +219,7 @@ static void _chunk_disassemble_one(Chunk self, size_t* offset) {
         case OP_CAST_FLOAT:
         case OP_CAST_BOOL:
         case OP_CAST_CHAR:
+        case OP_LOAD_MONOSTATE:
         case OP_POP:
         case OP_DUP: {
             chunk_disassemble_simple(self, offset);
@@ -239,6 +244,7 @@ static void _chunk_disassemble_one(Chunk self, size_t* offset) {
         } break;
         case OP_GET_LOCAL:
         case OP_SET_LOCAL:
+        case OP_END_BLOCK:
         case OP_JUMP:
         case OP_JUMP_IF_TRUE:
         case OP_JUMP_IF_FALSE: {

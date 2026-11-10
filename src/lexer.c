@@ -107,6 +107,12 @@ static bool lexer_next(Lexer* self, Token* out) {
         case ')': {
             tt = TT_RPAREN;
         } break;
+        case '{': {
+            tt = TT_LBRACE;
+        } break;
+        case '}': {
+            tt = TT_RBRACE;
+        } break;
         case ':': {
             tt = TT_COLON;
         } break;

@@ -15,6 +15,7 @@
 typedef struct ExprNode ExprNode;
 typedef struct DeclNode DeclNode;
 typedef struct TypeNode TypeNode;
+typedef struct Node Node;
 
 typedef enum {
     EXPR_NODE_INT,
@@ -27,6 +28,7 @@ typedef enum {
     EXPR_NODE_LOGICAL_OP,
     EXPR_NODE_CAST,
     EXPR_NODE_ASSIGNMENT,
+    EXPR_NODE_BLOCK,
 } ExprNodeType;
 
 typedef struct {
@@ -43,6 +45,18 @@ typedef struct {
     Token token;
     size_t stack_index;
 } VarNode;
+
+typedef enum {
+    UNARY_NEGATE,
+    UNARY_BIT_NOT,
+    UNARY_NOT,
+} UnaryOpType;
+
+typedef struct {
+    UnaryOpType type;
+    Token token;
+    ExprNode* operand;
+} UnaryOpNode;
 
 typedef enum {
     BIN_ADD,
@@ -95,27 +109,23 @@ typedef struct {
     ExprNode* right;
 } AssignmentNode;
 
-typedef enum {
-    UNARY_NEGATE,
-    UNARY_BIT_NOT,
-    UNARY_NOT,
-} UnaryOpType;
-
 typedef struct {
-    UnaryOpType type;
-    Token token;
-    ExprNode* operand;
-} UnaryOpNode;
+    DynamicArray(Node*) nodes;
+    Token rbrace;
+    u16 locals_count;
+    bool has_value;
+} BlockNode;
 
 struct ExprNode {
     union {
         LiteralNode literal;
         VarNode var;
+        UnaryOpNode unary_op;
         BinOpNode bin_op;
         LogicalOpNode logical_op;
         CastNode cast;
         AssignmentNode assignment;
-        UnaryOpNode unary_op;
+        BlockNode block;
     } as;
     ExprNodeType type;
 };
@@ -140,17 +150,17 @@ struct DeclNode {
 };
 
 typedef enum {
-    TYPE_NODE_BASIC,
+    TYPE_NODE_PRIMITIVE,
 } TypeNodeType;
 
 typedef struct {
     Token token;
-    BasicTypeType type;
-} BasicTypeNode;
+    PrimitiveTypeType type;
+} PrimitiveTypeNode;
 
 struct TypeNode {
     union {
-        BasicTypeNode basic_type;
+        PrimitiveTypeNode primitive_type;
     } as;
     TypeNodeType type;
 };
@@ -161,16 +171,19 @@ typedef enum {
     NODE_TYPE,
 } NodeType;
 
-typedef struct {
+struct Node {
     union {
         ExprNode expr;
         DeclNode decl;
         TypeNode type;
     } as;
     NodeType type;
-} Node;
+};
 
-typedef DynamicArray(Node*) Program;
+typedef DynamicArray(Node*) Dyna_Node;
+
+// Might possibly change this later so Program contains Dyna_Node instead of being an alias of it (probably won't though)
+typedef Dyna_Node Program;
 
 void expr_node_fprintln(FILE* file, const ExprNode* expr_node);
 

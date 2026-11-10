@@ -119,15 +119,20 @@ static bool parser_parse(Parser* self, Program* program) {
     bool success = true;
 
     while (!parser_matches(self, TT_EOF)) {
-        Node* node;
+        Node* node = NULL;
         switch (parser_cur(self).type) {
             case TT_KW_LET:
             case TT_KW_MUT: {
                 node = (Node*) parse_decl(self);
             } break;
             default: {
-                node = (Node*) parse_expr(self);
-                if (node && !parser_expect(self, TT_SEMI)) node = NULL;
+                ExprNode* expr = parse_expr(self);
+                if (!expr) break;
+
+                // Block does not require semicolon on its own
+                if (expr->type == EXPR_NODE_BLOCK || parser_expect(self, TT_SEMI)) {
+                    node = (Node*) expr;
+                }
             } break;
         }
 
@@ -146,20 +151,77 @@ static bool parser_parse(Parser* self, Program* program) {
     return success;
 }
 
+static BlockNode* parse_block(Parser* self) {
+    if (!parser_expect(self, TT_LBRACE)) return NULL;
+
+    BlockNode* block = (BlockNode*) parser_new_expr(self, (ExprNode) {
+        .type = EXPR_NODE_BLOCK,
+        .as.block = {
+            .has_value = false,
+        },
+    });
+
+    dyna_init(&block->nodes);
+
+    bool success = true;
+
+    while (!parser_has(self, TT_RBRACE) && !parser_has(self, TT_EOF)) {
+        Token token = parser_cur(self);
+        Node* node = NULL;
+
+        switch (token.type) {
+            case TT_KW_LET:
+            case TT_KW_MUT: {
+                node = (Node*) parse_decl(self);
+            } break;
+            default: {
+                ExprNode* expr = parse_expr(self);
+                if (!expr) break;
+
+                // Not parser_matches because the return statement handles that
+                if (parser_has(self, TT_RBRACE)) {
+                    node = (Node*) expr;
+                    block->has_value = true;
+                    break;
+                }
+
+                if (expr->type == EXPR_NODE_BLOCK || parser_matches(self, TT_SEMI)) {
+                    node = (Node*) expr;
+                }
+            } break;
+        }
+
+        if (node) {
+            dyna_append(&block->nodes, node);
+        } else {
+            success = false;
+
+            // Giving multiple errors on one statement would be a bit of a mess
+            // Not parser_matches with TT_BRACE because the return statement handles that
+            while (!parser_matches(self, TT_SEMI) && !parser_matches(self, TT_EOF) && !parser_has(self, TT_RBRACE)) {
+                parser_advance(self);
+            }
+        }
+    }
+
+    block->rbrace = parser_cur(self);
+    return success && parser_expect(self, TT_RBRACE) ? block : NULL;
+}
+
 static TypeNode* parse_type(Parser* self) {
-    BasicTypeType type;
+    PrimitiveTypeType type;
     switch (parser_cur(self).type) {
         case TT_KW_INT: {
-            type = BASIC_TYPE_INT;
+            type = PRIMITIVE_TYPE_INT;
         } break;
         case TT_KW_FLOAT: {
-            type = BASIC_TYPE_FLOAT;
+            type = PRIMITIVE_TYPE_FLOAT;
         } break;
         case TT_KW_BOOL: {
-            type = BASIC_TYPE_BOOL;
+            type = PRIMITIVE_TYPE_BOOL;
         } break;
         case TT_KW_CHAR: {
-            type = BASIC_TYPE_CHAR;
+            type = PRIMITIVE_TYPE_CHAR;
         } break;
         default: {
             parser_error_expected_cstr(self, "type name");
@@ -171,8 +233,8 @@ static TypeNode* parse_type(Parser* self) {
     parser_advance(self);
 
     return parser_new_type(self, (TypeNode) {
-        .type = TYPE_NODE_BASIC,
-        .as.basic_type = {
+        .type = TYPE_NODE_PRIMITIVE,
+        .as.primitive_type = {
             .token = token,
             .type = type,
         },
@@ -530,6 +592,9 @@ static ExprNode* parse_prefix_expr(Parser* self) {
             ExprNode* expr = parse_expr(self);
             if (!expr || !parser_expect(self, TT_RPAREN)) return NULL;
             return expr;
+        }
+        case TT_LBRACE: {
+            return (ExprNode*) parse_block(self);
         }
         default: {
             parser_error_expected_cstr(self, "expression");

@@ -18,3 +18,7 @@ if initial == 'C' {
 
 if initial == 'D' {}
 else if false {}
+
+# If without a value has type monostate and can be assigned even without an else clause
+let no_value = if true {};
+no_value; # {}

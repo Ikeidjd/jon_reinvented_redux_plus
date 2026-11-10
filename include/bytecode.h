@@ -36,12 +36,14 @@ typedef enum {
     OP_LOAD_FLOAT,
     OP_LOAD_BOOL,
     OP_LOAD_CHAR,
+    OP_LOAD_MONOSTATE,
 
     OP_GET_LOCAL,
     OP_SET_LOCAL,
 
     OP_POP,
     OP_DUP,
+    OP_END_BLOCK,
 
     OP_JUMP,
     OP_JUMP_IF_TRUE,

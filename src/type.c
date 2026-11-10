@@ -1,6 +1,7 @@
 #include "type.h"
 
 #include <stdlib.h>
+#include <string.h>
 #include <assert.h>
 
 void type_fprint(FILE* file, const Type* type) {
@@ -10,8 +11,11 @@ void type_fprint(FILE* file, const Type* type) {
     }
 
     switch (type->type) {
-        case TYPE_BASIC: {
-            fprintf(file, "%s", basic_type_to_string(((BasicType*) type)->type));
+        case TYPE_PRIMITIVE: {
+            fprintf(file, "%s", primitive_type_to_string(((PrimitiveType*) type)->type));
+        } break;
+        case TYPE_MONOSTATE: {
+            fprintf(file, "monostate");
         } break;
     }
 }
@@ -26,22 +30,24 @@ bool type_eq(Type* a, Type* b) {
     if (a == NULL || b == NULL || a->type != b->type) return false;
 
     switch (a->type) {
-        case TYPE_BASIC:
-            return ((BasicType*) a)->type == ((BasicType*) b)->type;
+        case TYPE_PRIMITIVE:
+            return ((PrimitiveType*) a)->type == ((PrimitiveType*) b)->type;
+        case TYPE_MONOSTATE:
+            return true;
     }
-
-    return false;
+    
+    assert(false && "Unreachable");
 }
 
-const char* basic_type_to_string(BasicTypeType type) {
+const char* primitive_type_to_string(PrimitiveTypeType type) {
     switch (type) {
-        case BASIC_TYPE_INT:
+        case PRIMITIVE_TYPE_INT:
             return "int";
-        case BASIC_TYPE_FLOAT:
+        case PRIMITIVE_TYPE_FLOAT:
             return "float";
-        case BASIC_TYPE_BOOL:
+        case PRIMITIVE_TYPE_BOOL:
             return "bool";
-        case BASIC_TYPE_CHAR:
+        case PRIMITIVE_TYPE_CHAR:
             return "char";
     }
 
@@ -64,29 +70,42 @@ void type_arena_destroy(TypeArena* arena) {
     hash_table_destroy(&arena->hash_table);
 }
 
-BasicType* basic_type_new(TypeArena* arena, BasicTypeType basic_type) {
-    BasicType type = {
-        .header = {
-            .type = TYPE_BASIC,
-            .hash = (hash_t) basic_type,
-        },
-        .type = basic_type,
-    };
+static Type* _type_arena_get_or_insert(TypeArena* arena, Type* type, size_t size, size_t offset) {
+    Type* out = (Type*) (arena->buf + arena->length + offset);
+    memcpy(out, type, size);
 
-    size_t offset = (alignof(type) - arena->length % alignof(type)) % alignof(type);
-
-    BasicType* out = (BasicType*) (arena->buf + arena->length + offset);
-    *out = type;
-
-    BasicType* got = (BasicType*) hash_table_get_or_insert(&arena->hash_table, (Type*) out);
+    Type* got = hash_table_get_or_insert(&arena->hash_table, out);
 
     if (out == got) {
         // If it was inserted
-        arena->length += sizeof(type) + offset;
+        arena->length += size + offset;
     } else {
         // If it was already present
         out = got;
     }
 
     return out;
+}
+
+#define type_arena_get_or_insert(arena, type) _type_arena_get_or_insert(arena, (Type*) &(type), sizeof(type), (alignof(type) - (arena)->length % alignof(type)) % alignof(type))
+
+PrimitiveType* primitive_type_new(TypeArena* arena, PrimitiveTypeType primitive_type) {
+    PrimitiveType type = {
+        .header = {
+            .type = TYPE_PRIMITIVE,
+            .hash = (hash_t) primitive_type + 1, // monostate is 0, so we add 1 here
+        },
+        .type = primitive_type,
+    };
+
+    return (PrimitiveType*) type_arena_get_or_insert(arena, type);
+}
+
+Type* monostate_type_new(TypeArena* arena) {
+    Type type = {
+        .type = TYPE_MONOSTATE,
+        .hash = 0,
+    };
+
+    return type_arena_get_or_insert(arena, type);
 }

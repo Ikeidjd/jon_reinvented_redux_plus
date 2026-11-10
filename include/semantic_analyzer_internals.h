@@ -29,6 +29,10 @@ typedef struct {
 
 static void sema_init(SemanticAnalyzer* self, TypeArena arena);
 
+static void sema_start_block(SemanticAnalyzer* self);
+
+static size_t sema_end_block(SemanticAnalyzer* self);
+
 static bool sema_add_var(SemanticAnalyzer* self, StringView name, TypeAndMutability type);
 
 static bool sema_get_var(SemanticAnalyzer* self, StringView name, size_t* out_index, Var* out);
@@ -47,7 +51,7 @@ static void sema_error_assign_to_immutable(SemanticAnalyzer* self, Token token);
 
 static void sema_error_casting_non_primitives(SemanticAnalyzer* self, Token token, Type* src, Type* dst);
 
-static void sema_error_casting(SemanticAnalyzer* self, Token token, BasicType* src, BasicType* dst);
+static void sema_error_casting(SemanticAnalyzer* self, Token token, PrimitiveType* src, PrimitiveType* dst);
 
 static void sema_error_too_many_vars(SemanticAnalyzer* self, Token token);
 

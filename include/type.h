@@ -11,7 +11,8 @@
 // Only allocate through TypeArena
 
 typedef enum {
-    TYPE_BASIC,
+    TYPE_PRIMITIVE,
+    TYPE_MONOSTATE,
 } TypeType;
 
 typedef struct Type {
@@ -28,18 +29,18 @@ bool type_eq(Type* a, Type* b);
 PRINT_GEN_ALL(const Type*, type)
 
 typedef enum {
-    BASIC_TYPE_INT,
-    BASIC_TYPE_FLOAT,
-    BASIC_TYPE_BOOL,
-    BASIC_TYPE_CHAR,
-} BasicTypeType;
+    PRIMITIVE_TYPE_INT,
+    PRIMITIVE_TYPE_FLOAT,
+    PRIMITIVE_TYPE_BOOL,
+    PRIMITIVE_TYPE_CHAR,
+} PrimitiveTypeType;
 
 typedef struct {
     Type header;
-    BasicTypeType type;
-} BasicType;
+    PrimitiveTypeType type;
+} PrimitiveType;
 
-const char* basic_type_to_string(BasicTypeType type);
+const char* primitive_type_to_string(PrimitiveTypeType type);
 
 typedef struct {
     char* buf;
@@ -51,4 +52,5 @@ void type_arena_init(TypeArena* arena);
 
 void type_arena_destroy(TypeArena* arena);
 
-BasicType* basic_type_new(TypeArena* arena, BasicTypeType basic_type);
+PrimitiveType* primitive_type_new(TypeArena* arena, PrimitiveTypeType primitive_type);
+Type* monostate_type_new(TypeArena* arena);

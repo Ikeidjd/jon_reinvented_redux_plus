@@ -56,6 +56,10 @@ const char* tt_repr(TokenType tt) {
             return "TT_LPAREN";
         case TT_RPAREN:
             return "TT_RPAREN";
+        case TT_LBRACE:
+            return "TT_LBRACE";
+        case TT_RBRACE:
+            return "TT_RBRACE";
         case TT_COLON:
             return "TT_COLON";
         case TT_SEMI:
@@ -84,7 +88,7 @@ const char* tt_repr(TokenType tt) {
             return "TT_EOF";
     }
 
-    return "";
+    assert(false && "Unreachable");
 }
 
 const char* tt_error_message_name(TokenType tt) {
@@ -141,6 +145,10 @@ const char* tt_error_message_name(TokenType tt) {
             return "'('";
         case TT_RPAREN:
             return "')'";
+        case TT_LBRACE:
+            return "'{'";
+        case TT_RBRACE:
+            return "'}'";
         case TT_COLON:
             return "':'";
         case TT_SEMI:
@@ -169,7 +177,7 @@ const char* tt_error_message_name(TokenType tt) {
             return "end of file";
     }
 
-    return "";
+    assert(false && "Unreachable");
 }
 
 bool tt_is_keyword(TokenType tt) {
@@ -200,6 +208,8 @@ bool tt_is_keyword(TokenType tt) {
         case TT_EQ:
         case TT_LPAREN:
         case TT_RPAREN:
+        case TT_LBRACE:
+        case TT_RBRACE:
         case TT_COLON:
         case TT_SEMI:
         case TT_ID:

@@ -10,6 +10,7 @@ typedef enum {
     VALUE_FLOAT,
     VALUE_BOOL,
     VALUE_CHAR,
+    VALUE_MONOSTATE,
 } ValueType;
 
 typedef struct {

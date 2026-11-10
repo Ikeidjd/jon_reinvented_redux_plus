@@ -2,6 +2,7 @@
 
 #define INDENT_INCREMENT 2
 
+static void node_fprintln_indent(FILE* file, const Node* node, size_t indent);
 static void type_node_fprintln_indent(FILE* file, const TypeNode* type_node, size_t indent);
 
 static void process_indent(FILE* file, size_t* indent) {
@@ -31,6 +32,10 @@ static void expr_node_fprintln_indent(FILE* file, const ExprNode* expr_node, siz
         case EXPR_NODE_VAR: {
             fprintf(file, "Var("SV_FMT")\n", SV_ARG(expr_node->as.var.token.text));
         } break;
+        case EXPR_NODE_UNARY_OP: {
+            fprintf(file, "UnaryOp("SV_FMT"):\n", SV_ARG(expr_node->as.unary_op.token.text));
+            expr_node_fprintln_indent(file, expr_node->as.unary_op.operand, indent);
+        } break;
         case EXPR_NODE_BIN_OP: {
             fprintf(file, "BinOp("SV_FMT"):\n", SV_ARG(expr_node->as.bin_op.token.text));
             expr_node_fprintln_indent(file, expr_node->as.bin_op.left, indent);
@@ -51,9 +56,11 @@ static void expr_node_fprintln_indent(FILE* file, const ExprNode* expr_node, siz
             expr_node_fprintln_indent(file, expr_node->as.assignment.left, indent);
             expr_node_fprintln_indent(file, expr_node->as.assignment.right, indent);
         } break;
-        case EXPR_NODE_UNARY_OP: {
-            fprintf(file, "UnaryOp("SV_FMT"):\n", SV_ARG(expr_node->as.unary_op.token.text));
-            expr_node_fprintln_indent(file, expr_node->as.unary_op.operand, indent);
+        case EXPR_NODE_BLOCK: {
+            fprintf(file, "Block:\n");
+            for (size_t i = 0; i < expr_node->as.block.nodes.length; i++) {
+                node_fprintln_indent(file, expr_node->as.block.nodes.data[i], indent);
+            }
         } break;
     }
 }
@@ -75,7 +82,7 @@ static void type_node_fprintln_indent(FILE* file, const TypeNode* type_node, siz
 
     switch (type_node->type) {
         case DECL_NODE_VAR: {
-            fprintf(file, "BasicType(%s)\n", basic_type_to_string(type_node->as.basic_type.type));
+            fprintf(file, "PrimitiveType(%s)\n", primitive_type_to_string(type_node->as.primitive_type.type));
         } break;
     }
 }

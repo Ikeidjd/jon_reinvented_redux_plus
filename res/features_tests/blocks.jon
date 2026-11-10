@@ -1,0 +1,28 @@
+# Variables declared in a block go out of scope when it ends
+let a: char = '+';
+{
+    let a: bool = true;
+    a; # true
+}
+a; # '+'
+
+# Blocks can return a value
+let step_by_step = {
+    let a = 10;
+    let b = 20;
+    let c = a + b;
+    let d = c * 2;
+    d + 7
+}; # 67
+
+# Blocks that don't return a value have type monostate, which can't be annotated
+# Values of this type will be printed as '{}'
+let no_value = {}; # {}
+
+# Errors
+# monostate is not compatible with other types and operations
+# let a: int = {};
+# {} + {};
+
+# Unbalanced braces
+# }{};{{}

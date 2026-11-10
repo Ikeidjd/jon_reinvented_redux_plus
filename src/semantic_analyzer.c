@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <assert.h>
 
 bool analyze_program(Program* program, TypeArena* arena) {
     SemanticAnalyzer* self = malloc(sizeof(*self));
@@ -32,6 +33,23 @@ static void sema_init(SemanticAnalyzer* self, TypeArena arena) {
     self->arena = arena;
     self->vars.top = 0;
     self->vars.depth = 0;
+}
+
+static void sema_start_block(SemanticAnalyzer* self) {
+    self->vars.depth++;
+}
+
+static size_t sema_end_block(SemanticAnalyzer* self) {
+    size_t locals_count = 0;
+
+    for (size_t i = self->vars.top; i-- && self->vars.data[i].depth == self->vars.depth;) {
+        locals_count++;
+    }
+
+    self->vars.depth--;
+
+    self->vars.top -= locals_count;
+    return locals_count;
 }
 
 static bool sema_add_var(SemanticAnalyzer* self, StringView name, TypeAndMutability type) {
@@ -136,7 +154,7 @@ static void sema_error_casting_non_primitives(SemanticAnalyzer* self, Token toke
     token_show_in_line(stderr, token);
 }
 
-static void sema_error_casting(SemanticAnalyzer* self, Token token, BasicType* src, BasicType* dst) {
+static void sema_error_casting(SemanticAnalyzer* self, Token token, PrimitiveType* src, PrimitiveType* dst) {
     (void) self;
 
     fprintf(stderr, "Semantic error on line %zu: cannot cast from ", token.line_number + 1);
@@ -175,19 +193,19 @@ static bool analyze_node(SemanticAnalyzer* self, Node* node) {
 static bool analyze_expr(SemanticAnalyzer* self, ExprNode* expr, TypeAndMutability* out) {
     switch (expr->type) {
         case EXPR_NODE_INT: {
-            *out = from_type((Type*) basic_type_new(&self->arena, BASIC_TYPE_INT), false);
+            *out = from_type((Type*) primitive_type_new(&self->arena, PRIMITIVE_TYPE_INT), false);
             return true;
         }
         case EXPR_NODE_FLOAT: {
-            *out = from_type((Type*) basic_type_new(&self->arena, BASIC_TYPE_FLOAT), false);
+            *out = from_type((Type*) primitive_type_new(&self->arena, PRIMITIVE_TYPE_FLOAT), false);
             return true;
         }
         case EXPR_NODE_BOOL: {
-            *out = from_type((Type*) basic_type_new(&self->arena, BASIC_TYPE_BOOL), false);
+            *out = from_type((Type*) primitive_type_new(&self->arena, PRIMITIVE_TYPE_BOOL), false);
             return true;
         }
         case EXPR_NODE_CHAR: {
-            *out = from_type((Type*) basic_type_new(&self->arena, BASIC_TYPE_CHAR), false);
+            *out = from_type((Type*) primitive_type_new(&self->arena, PRIMITIVE_TYPE_CHAR), false);
             return true;
         }
         case EXPR_NODE_VAR: {
@@ -202,6 +220,37 @@ static bool analyze_expr(SemanticAnalyzer* self, ExprNode* expr, TypeAndMutabili
             *out = var.type;
             return true;
         }
+        case EXPR_NODE_UNARY_OP: {
+            TypeAndMutability operand;
+            if (!analyze_expr(self, expr->as.unary_op.operand, &operand)) return false;
+
+            Type* int_type = (Type*) primitive_type_new(&self->arena, PRIMITIVE_TYPE_INT);
+            Type* float_type = (Type*) primitive_type_new(&self->arena, PRIMITIVE_TYPE_FLOAT);
+
+            switch (expr->as.unary_op.type) {
+                case UNARY_NEGATE: {
+                    if (operand.type != int_type && operand.type != float_type) {
+                        sema_error_invalid_type_for_op(self, expr->as.bin_op.token, operand.type);
+                        return false;
+                    }
+                } break;
+                case UNARY_BIT_NOT: {
+                    if (operand.type != int_type) {
+                        sema_error_invalid_type_for_op(self, expr->as.bin_op.token, operand.type);
+                        return false;
+                    }
+                } break;
+                case UNARY_NOT: {
+                    if (operand.type != (Type*) primitive_type_new(&self->arena, PRIMITIVE_TYPE_BOOL)) {
+                        sema_error_invalid_type_for_op(self, expr->as.bin_op.token, operand.type);
+                        return false;
+                    }
+                } break;
+            }
+
+            *out = operand;
+            return true;
+        }
         case EXPR_NODE_BIN_OP: {
             TypeAndMutability left;
             if (!analyze_expr(self, expr->as.bin_op.left, &left)) return false;
@@ -214,8 +263,8 @@ static bool analyze_expr(SemanticAnalyzer* self, ExprNode* expr, TypeAndMutabili
                 return false;
             }
 
-            Type* int_type = (Type*) basic_type_new(&self->arena, BASIC_TYPE_INT);
-            Type* float_type = (Type*) basic_type_new(&self->arena, BASIC_TYPE_FLOAT);
+            Type* int_type = (Type*) primitive_type_new(&self->arena, PRIMITIVE_TYPE_INT);
+            Type* float_type = (Type*) primitive_type_new(&self->arena, PRIMITIVE_TYPE_FLOAT);
 
             switch (expr->as.bin_op.type) {
                 case BIN_ADD:
@@ -240,14 +289,14 @@ static bool analyze_expr(SemanticAnalyzer* self, ExprNode* expr, TypeAndMutabili
                 } break;
                 case BIN_EQ:
                 case BIN_NE: {
-                    *out = from_type((Type*) basic_type_new(&self->arena, BASIC_TYPE_BOOL), false);
+                    *out = from_type((Type*) primitive_type_new(&self->arena, PRIMITIVE_TYPE_BOOL), false);
                     return true;
                 }
                 case BIN_LT:
                 case BIN_LE:
                 case BIN_GT:
                 case BIN_GE: {
-                    if (left.type != int_type && left.type != float_type && left.type != ((Type*) basic_type_new(&self->arena, BASIC_TYPE_CHAR))) {
+                    if (left.type != int_type && left.type != float_type && left.type != ((Type*) primitive_type_new(&self->arena, PRIMITIVE_TYPE_CHAR))) {
                         sema_error_invalid_types_for_op(self, expr->as.bin_op.token, left.type, right.type);
                         return false;
                     }
@@ -264,7 +313,7 @@ static bool analyze_expr(SemanticAnalyzer* self, ExprNode* expr, TypeAndMutabili
             TypeAndMutability right;
             if (!analyze_expr(self, expr->as.logical_op.right, &right)) return false;
 
-            if (left.type != (Type*) basic_type_new(&self->arena, BASIC_TYPE_BOOL)) {
+            if (left.type != (Type*) primitive_type_new(&self->arena, PRIMITIVE_TYPE_BOOL)) {
                 sema_error_invalid_types_for_op(self, expr->as.logical_op.token, left.type, right.type);
                 return false;
             }
@@ -284,35 +333,35 @@ static bool analyze_expr(SemanticAnalyzer* self, ExprNode* expr, TypeAndMutabili
             Type* dst = analyze_type(self, expr->as.cast.type);
             if (!dst) return false;
 
-            if (!src.type || src.type->type != TYPE_BASIC || dst->type != TYPE_BASIC) {
+            if (!src.type || src.type->type != TYPE_PRIMITIVE || dst->type != TYPE_PRIMITIVE) {
                 sema_error_casting_non_primitives(self, expr->as.cast.token, src.type, dst);
                 return false;
             }
 
-            BasicType* src_type = (BasicType*) src.type;
-            BasicType* dst_type = (BasicType*) dst;
+            PrimitiveType* src_type = (PrimitiveType*) src.type;
+            PrimitiveType* dst_type = (PrimitiveType*) dst;
 
             switch (src_type->type) {
-                case BASIC_TYPE_INT: {
-                    if (dst_type->type != BASIC_TYPE_INT && dst_type->type != BASIC_TYPE_FLOAT && dst_type->type != BASIC_TYPE_CHAR) {
+                case PRIMITIVE_TYPE_INT: {
+                    if (dst_type->type != PRIMITIVE_TYPE_INT && dst_type->type != PRIMITIVE_TYPE_FLOAT && dst_type->type != PRIMITIVE_TYPE_CHAR) {
                         sema_error_casting(self, expr->as.cast.token, src_type, dst_type);
                         return false;
                     }
                 } break;
-                case BASIC_TYPE_FLOAT: {
-                    if (dst_type->type != BASIC_TYPE_INT && dst_type->type != BASIC_TYPE_FLOAT) {
+                case PRIMITIVE_TYPE_FLOAT: {
+                    if (dst_type->type != PRIMITIVE_TYPE_INT && dst_type->type != PRIMITIVE_TYPE_FLOAT) {
                         sema_error_casting(self, expr->as.cast.token, src_type, dst_type);
                         return false;
                     }
                 } break;
-                case BASIC_TYPE_BOOL: {
-                    if (dst_type->type != BASIC_TYPE_INT && dst_type->type != BASIC_TYPE_BOOL) {
+                case PRIMITIVE_TYPE_BOOL: {
+                    if (dst_type->type != PRIMITIVE_TYPE_INT && dst_type->type != PRIMITIVE_TYPE_BOOL) {
                         sema_error_casting(self, expr->as.cast.token, src_type, dst_type);
                         return false;
                     }
                 } break;
-                case BASIC_TYPE_CHAR: {
-                    if (dst_type->type != BASIC_TYPE_INT && dst_type->type != BASIC_TYPE_CHAR) {
+                case PRIMITIVE_TYPE_CHAR: {
+                    if (dst_type->type != PRIMITIVE_TYPE_INT && dst_type->type != PRIMITIVE_TYPE_CHAR) {
                         sema_error_casting(self, expr->as.cast.token, src_type, dst_type);
                         return false;
                     }
@@ -320,16 +369,16 @@ static bool analyze_expr(SemanticAnalyzer* self, ExprNode* expr, TypeAndMutabili
             }
 
             switch (dst_type->type) {
-                case BASIC_TYPE_INT: {
+                case PRIMITIVE_TYPE_INT: {
                     expr->as.cast.cast_opcode = OP_CAST_INT;
                 } break;
-                case BASIC_TYPE_FLOAT: {
+                case PRIMITIVE_TYPE_FLOAT: {
                     expr->as.cast.cast_opcode = OP_CAST_FLOAT;
                 } break;
-                case BASIC_TYPE_BOOL: {
+                case PRIMITIVE_TYPE_BOOL: {
                     expr->as.cast.cast_opcode = OP_CAST_BOOL;
                 } break;
-                case BASIC_TYPE_CHAR: {
+                case PRIMITIVE_TYPE_CHAR: {
                     expr->as.cast.cast_opcode = OP_CAST_CHAR;
                 } break;
             }
@@ -357,40 +406,32 @@ static bool analyze_expr(SemanticAnalyzer* self, ExprNode* expr, TypeAndMutabili
             *out = left;
             return true;
         }
-        case EXPR_NODE_UNARY_OP: {
-            TypeAndMutability operand;
-            if (!analyze_expr(self, expr->as.unary_op.operand, &operand)) return false;
+        case EXPR_NODE_BLOCK: {
+            TypeAndMutability type = from_type(monostate_type_new(&self->arena), false);
+            bool success = true;
 
-            Type* int_type = (Type*) basic_type_new(&self->arena, BASIC_TYPE_INT);
-            Type* float_type = (Type*) basic_type_new(&self->arena, BASIC_TYPE_FLOAT);
+            sema_start_block(self);
 
-            switch (expr->as.unary_op.type) {
-                case UNARY_NEGATE: {
-                    if (operand.type != int_type && operand.type != float_type) {
-                        sema_error_invalid_type_for_op(self, expr->as.bin_op.token, operand.type);
-                        return false;
-                    }
-                } break;
-                case UNARY_BIT_NOT: {
-                    if (operand.type != int_type) {
-                        sema_error_invalid_type_for_op(self, expr->as.bin_op.token, operand.type);
-                        return false;
-                    }
-                } break;
-                case UNARY_NOT: {
-                    if (operand.type != (Type*) basic_type_new(&self->arena, BASIC_TYPE_BOOL)) {
-                        sema_error_invalid_type_for_op(self, expr->as.bin_op.token, operand.type);
-                        return false;
-                    }
-                } break;
+            for (size_t i = 0; i < expr->as.block.nodes.length; i++) {
+                Node* node = expr->as.block.nodes.data[i];
+
+                // Last element of block might be an expression, in which case it determines the return value
+                if (i == expr->as.block.nodes.length - 1 && node->type == NODE_EXPR) {
+                    if (!analyze_expr(self, &node->as.expr, &type)) success = false;
+                    continue;
+                }
+
+                if (!analyze_node(self, node)) success = false;
             }
 
-            *out = operand;
-            return true;
+            expr->as.block.locals_count = sema_end_block(self);
+
+            *out = type;
+            return success;
         }
     }
 
-    return false;
+    assert(false && "Unreachable");
 }
 
 static bool analyze_decl(SemanticAnalyzer* self, DeclNode* decl) {
@@ -404,6 +445,10 @@ static bool analyze_decl(SemanticAnalyzer* self, DeclNode* decl) {
 
             TypeAndMutability expr;
             bool expr_success = analyze_expr(self, decl->as.var_decl.expr, &expr);
+
+            if (expr_success && !type) {
+                type = expr.type;
+            }
 
             bool compatible_types = !type || type == expr.type;
             if (!compatible_types) {
@@ -428,8 +473,8 @@ static bool analyze_decl(SemanticAnalyzer* self, DeclNode* decl) {
 
 static Type* analyze_type(SemanticAnalyzer* self, TypeNode* type) {
     switch (type->type) {
-        case TYPE_NODE_BASIC: {
-            return (Type*) basic_type_new(&self->arena, type->as.basic_type.type);
+        case TYPE_NODE_PRIMITIVE: {
+            return (Type*) primitive_type_new(&self->arena, type->as.primitive_type.type);
         }
     }
 
