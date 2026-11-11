@@ -38,8 +38,11 @@ true as bool; # true
 # false as float;
 # false as char;
 
+# Casting is only supported for primitive types
 # let a = true + false; # <error type>
-# a as int; # Casting is only supported for primitive types
+# a as int;
+# 10 as monostate;
+# {} as int;
 
 # Error: expected type name
 # 0 as;
