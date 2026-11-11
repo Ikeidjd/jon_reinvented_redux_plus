@@ -1,6 +1,6 @@
 let initial: char = 'A';
 
-# If with a value must have an else clause
+# If with a value must have an else branch
 let i: int = if initial == 'A' {
     let x: int = 6;
     let y: int = 10;
@@ -11,12 +11,7 @@ let i: int = if initial == 'A' {
     0
 };
 
-# Error: if with a value but with no else clause
-# if true {
-#     0
-# }
-
-# If without a value doesn't need an else clause
+# If without a value doesn't need an else branch
 if initial == 'C' {
     0;
 }
@@ -24,6 +19,26 @@ if initial == 'C' {
 if initial == 'D' {}
 else if false {}
 
-# If without a value has type monostate and can be assigned even without an else clause
+# If without a value has type monostate and can be assigned even without an else branch
 let no_value = if true {};
 no_value; # {}
+
+# Errors
+# Condition is not bool
+# if 0 {}
+
+# Incompatible types
+# if true {
+#     0
+# } else if true {
+#     0.0
+# } else if true {
+#     false
+# } else {
+#     'a'
+# }
+
+# if with a value but with no else branch
+# if true {
+#     0
+# }

@@ -29,6 +29,7 @@ typedef enum {
     EXPR_NODE_CAST,
     EXPR_NODE_ASSIGNMENT,
     EXPR_NODE_BLOCK,
+    EXPR_NODE_IF_ELSE,
 } ExprNodeType;
 
 typedef struct {
@@ -116,6 +117,13 @@ typedef struct {
     bool has_value;
 } BlockNode;
 
+typedef struct {
+    Token token;
+    ExprNode* condition;
+    BlockNode* if_branch;
+    ExprNode* else_branch; // Can't be a BlockNode because it might be another IfElseNode. Also, it can be NULL
+} IfElseNode;
+
 struct ExprNode {
     union {
         LiteralNode literal;
@@ -126,6 +134,7 @@ struct ExprNode {
         CastNode cast;
         AssignmentNode assignment;
         BlockNode block;
+        IfElseNode if_else;
     } as;
     ExprNodeType type;
 };

@@ -50,6 +50,9 @@ typedef enum {
     TT_KW_LET,
     TT_KW_MUT,
 
+    TT_KW_IF,
+    TT_KW_ELSE,
+
     TT_KW_AS,
 
     TT_KW_INT,

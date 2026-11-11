@@ -106,26 +106,26 @@ static void sema_error_incompatible_types(SemanticAnalyzer* self, Token token, T
     token_show_in_line(stderr, token);
 }
 
-static void sema_error_invalid_types_for_op(SemanticAnalyzer* self, Token op, Type* left, Type* right) {
+static void sema_error_invalid_types_for_op(SemanticAnalyzer* self, Token token, Type* left, Type* right) {
     (void) self;
 
-    fprintf(stderr, "Semantic error on line %zu: operation '"SV_FMT"' cannot be performed on ", op.line_number + 1, SV_ARG(op.text));
+    fprintf(stderr, "Semantic error on line %zu: operation '"SV_FMT"' cannot be performed on ", token.line_number + 1, SV_ARG(token.text));
     type_fprint(stderr, left);
     fprintf(stderr, " and ");
     type_fprint(stderr, right);
     fprintf(stderr, ".\n");
 
-    token_show_in_line(stderr, op);
+    token_show_in_line(stderr, token);
 }
 
-static void sema_error_invalid_type_for_op(SemanticAnalyzer* self, Token op, Type* type) {
+static void sema_error_invalid_type_for_op(SemanticAnalyzer* self, Token token, Type* type) {
     (void) self;
 
-    fprintf(stderr, "Semantic error on line %zu: operation '"SV_FMT"' cannot be performed on ", op.line_number + 1, SV_ARG(op.text));
+    fprintf(stderr, "Semantic error on line %zu: operation '"SV_FMT"' cannot be performed on ", token.line_number + 1, SV_ARG(token.text));
     type_fprint(stderr, type);
     fprintf(stderr, ".\n");
 
-    token_show_in_line(stderr, op);
+    token_show_in_line(stderr, token);
 }
 
 static void sema_error_undeclared_variable(SemanticAnalyzer* self, Token token) {
@@ -163,6 +163,37 @@ static void sema_error_casting(SemanticAnalyzer* self, Token token, PrimitiveTyp
     type_fprint(stderr, (Type*) dst);
     fprintf(stderr, ".\n");
 
+    token_show_in_line(stderr, token);
+}
+
+static void sema_error_non_bool_for_if_condition(SemanticAnalyzer* self, Token token, Type* type) {
+    (void) self;
+
+    fprintf(stderr, "Semantic error on line %zu: if condition must be bool, but was ", token.line_number + 1);
+    type_fprint(stderr, type);
+    fprintf(stderr, ".\n");
+
+    token_show_in_line(stderr, token);
+}
+
+static void sema_error_incompatible_types_for_if_branches(SemanticAnalyzer* self, Token token, Type* if_type, Type* else_type) {
+    (void) self;
+
+    fprintf(stderr, "Semantic error on line %zu: if and else types must be the same, but were ", token.line_number + 1);
+    type_fprint(stderr, if_type);
+    fprintf(stderr, " and ");
+    type_fprint(stderr, else_type);
+    fprintf(stderr, ".\n");
+
+    token_show_in_line(stderr, token);
+}
+
+static void sema_error_no_else_branch_for_non_monostate_if(SemanticAnalyzer* self, Token token, Type* if_type) {
+    (void) self;
+
+    fprintf(stderr, "Semantic error on line %zu: if branch with a value of type ", token.line_number + 1);
+    type_fprint(stderr, if_type);
+    fprintf(stderr, " must have a corresponding else branch.\n");
     token_show_in_line(stderr, token);
 }
 
@@ -418,7 +449,9 @@ static bool analyze_expr(SemanticAnalyzer* self, ExprNode* expr, TypeAndMutabili
                 Node* node = expr->as.block.nodes.data[i];
 
                 // Last element of block might be an expression, in which case it determines the return value
-                if (i == expr->as.block.nodes.length - 1 && node->type == NODE_EXPR) {
+                if (i == expr->as.block.nodes.length - 1 && expr->as.block.has_value) {
+                    assert(node->type == NODE_EXPR && "Block with value should have expression as last element");
+
                     if (!analyze_expr(self, &node->as.expr, &type)) success = false;
                     continue;
                 }
@@ -428,7 +461,35 @@ static bool analyze_expr(SemanticAnalyzer* self, ExprNode* expr, TypeAndMutabili
 
             expr->as.block.locals_count = sema_end_block(self);
 
-            *out = type;
+            if (success) *out = type;
+            return success;
+        }
+        case EXPR_NODE_IF_ELSE: {
+            TypeAndMutability condition;
+            bool success = analyze_expr(self, expr->as.if_else.condition, &condition);
+
+            if (success && condition.type != (Type*) primitive_type_new(&self->arena, PRIMITIVE_TYPE_BOOL)) {
+                sema_error_non_bool_for_if_condition(self, expr->as.if_else.token, condition.type);
+                success = false;
+            }
+
+            TypeAndMutability if_branch;
+            success &= analyze_expr(self, (ExprNode*) expr->as.if_else.if_branch, &if_branch);
+
+            if (expr->as.if_else.else_branch) {
+                TypeAndMutability else_branch;
+                success &= analyze_expr(self, expr->as.if_else.else_branch, &else_branch);
+
+                if (if_branch.type != else_branch.type) {
+                    sema_error_incompatible_types_for_if_branches(self, expr->as.if_else.token, if_branch.type, else_branch.type);
+                    success = false;
+                }
+            } else if (if_branch.type != monostate_type_new(&self->arena)) {
+                sema_error_no_else_branch_for_non_monostate_if(self, expr->as.if_else.token, if_branch.type);
+                success = false;
+            }
+
+            if (success) *out = if_branch;
             return success;
         }
     }

@@ -116,9 +116,15 @@ static TypeNode* parser_new_type(Parser* self, TypeNode type) {
 }
 
 static bool parser_parse(Parser* self, Program* program) {
+    return parse_nodes(self, (Dyna_Node*) program, NULL);
+}
+
+static bool parse_nodes(Parser* self, Dyna_Node* nodes, BlockNode* block) {
     bool success = true;
 
-    while (!parser_matches(self, TT_EOF)) {
+    while (true) {
+        if (parser_has(self, TT_EOF) || (block && parser_has(self, TT_RBRACE))) break;
+
         Node* node = NULL;
         switch (parser_cur(self).type) {
             case TT_KW_LET:
@@ -129,23 +135,36 @@ static bool parser_parse(Parser* self, Program* program) {
                 ExprNode* expr = parse_expr(self);
                 if (!expr) break;
 
-                // Block does not require semicolon on its own
-                if (expr->type == EXPR_NODE_BLOCK || parser_expect(self, TT_SEMI)) {
+                // Not parser_matches because the part after the loop handles that
+                if (block && parser_has(self, TT_RBRACE)) {
+                    node = (Node*) expr;
+                    block->has_value = true;
+                    break;
+                }
+
+                // Block and if do not require a semicolon on their own
+                if (expr->type == EXPR_NODE_BLOCK || expr->type == EXPR_NODE_IF_ELSE || parser_expect(self, TT_SEMI)) {
                     node = (Node*) expr;
                 }
             } break;
         }
 
         if (node) {
-            dyna_append(program, node);
+            dyna_append(nodes, node);
         } else {
             success = false;
 
             // Giving multiple errors on one statement would be a bit of a mess
-            while (!parser_matches(self, TT_SEMI) && !parser_matches(self, TT_EOF)) {
+            while (true) {
+                if (parser_matches(self, TT_SEMI) || parser_matches(self, TT_EOF) || (block && parser_has(self, TT_RBRACE))) break;
                 parser_advance(self);
             }
         }
+    }
+
+    if (block) {
+        block->rbrace = parser_cur(self);
+        success |= parser_expect(self, TT_RBRACE);
     }
 
     return success;
@@ -162,50 +181,7 @@ static BlockNode* parse_block(Parser* self) {
     });
 
     dyna_init(&block->nodes);
-
-    bool success = true;
-
-    while (!parser_has(self, TT_RBRACE) && !parser_has(self, TT_EOF)) {
-        Token token = parser_cur(self);
-        Node* node = NULL;
-
-        switch (token.type) {
-            case TT_KW_LET:
-            case TT_KW_MUT: {
-                node = (Node*) parse_decl(self);
-            } break;
-            default: {
-                ExprNode* expr = parse_expr(self);
-                if (!expr) break;
-
-                // Not parser_matches because the return statement handles that
-                if (parser_has(self, TT_RBRACE)) {
-                    node = (Node*) expr;
-                    block->has_value = true;
-                    break;
-                }
-
-                if (expr->type == EXPR_NODE_BLOCK || parser_matches(self, TT_SEMI)) {
-                    node = (Node*) expr;
-                }
-            } break;
-        }
-
-        if (node) {
-            dyna_append(&block->nodes, node);
-        } else {
-            success = false;
-
-            // Giving multiple errors on one statement would be a bit of a mess
-            // Not parser_matches with TT_BRACE because the return statement handles that
-            while (!parser_matches(self, TT_SEMI) && !parser_matches(self, TT_EOF) && !parser_has(self, TT_RBRACE)) {
-                parser_advance(self);
-            }
-        }
-    }
-
-    block->rbrace = parser_cur(self);
-    return success && parser_expect(self, TT_RBRACE) ? block : NULL;
+    return parse_nodes(self, (Dyna_Node*) &block->nodes, block) ? block : NULL;
 }
 
 static TypeNode* parse_type(Parser* self) {
@@ -606,6 +582,38 @@ static ExprNode* parse_prefix_expr(Parser* self) {
         }
         case TT_LBRACE: {
             return (ExprNode*) parse_block(self);
+        }
+        case TT_KW_IF: {
+            Token token = parser_cur(self);
+            parser_advance(self);
+
+            ExprNode* condition = parse_expr(self);
+            if (!condition) return NULL;
+
+            BlockNode* if_branch = parse_block(self);
+            if (!if_branch) return NULL;
+
+            ExprNode* else_branch = NULL;
+
+            if (parser_matches(self, TT_KW_ELSE)) {
+                if (parser_has(self, TT_KW_IF) || parser_has(self, TT_LBRACE)) {
+                    else_branch = parse_prefix_expr(self);
+                    if (!else_branch) return NULL;
+                } else {
+                    parser_error_expected_cstr(self, "keyword 'if' or '{'");
+                    return NULL;
+                }
+            }
+
+            return parser_new_expr(self, (ExprNode) {
+                .type = EXPR_NODE_IF_ELSE,
+                .as.if_else = {
+                    .token = token,
+                    .condition = condition,
+                    .if_branch = if_branch,
+                    .else_branch = else_branch,
+                },
+            });
         }
         default: {
             parser_error_expected_cstr(self, "expression");

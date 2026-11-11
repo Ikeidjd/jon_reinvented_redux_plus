@@ -160,6 +160,23 @@ static void compile_expr(Compiler* self, ExprNode* expr) {
             to_le_u16(expr->as.block.locals_count, buf);
             chunk_emit_args(&self->chunk, OP_END_BLOCK, 2, buf, expr->as.block.rbrace.line_number);
         } break;
+        case EXPR_NODE_IF_ELSE: {
+            compile_expr(self, expr->as.if_else.condition);
+            size_t jump_to_else = chunk_emit_jump(&self->chunk, OP_JUMP_IF_FALSE, expr->as.if_else.token.line_number);
+
+            compile_expr(self, (ExprNode*) expr->as.if_else.if_branch);
+            size_t jump_to_end = chunk_emit_jump(&self->chunk, OP_JUMP, self->chunk.lines.data[self->chunk.lines.length - 1]);
+
+            chunk_patch_jump(&self->chunk, jump_to_else);
+
+            if (expr->as.if_else.else_branch) {
+                compile_expr(self, expr->as.if_else.else_branch);
+            } else {
+                chunk_emit(&self->chunk, OP_LOAD_MONOSTATE, self->chunk.lines.data[self->chunk.lines.length - 1]);
+            }
+
+            chunk_patch_jump(&self->chunk, jump_to_end);
+        } break;
     }
 }
 

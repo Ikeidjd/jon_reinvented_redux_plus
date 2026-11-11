@@ -58,8 +58,18 @@ static void expr_node_fprintln_indent(FILE* file, const ExprNode* expr_node, siz
         } break;
         case EXPR_NODE_BLOCK: {
             fprintf(file, "Block:\n");
+
             for (size_t i = 0; i < expr_node->as.block.nodes.length; i++) {
                 node_fprintln_indent(file, expr_node->as.block.nodes.data[i], indent);
+            }
+        } break;
+        case EXPR_NODE_IF_ELSE: {
+            fprintf(file, "If:\n");
+            expr_node_fprintln_indent(file, expr_node->as.if_else.condition, indent);
+            expr_node_fprintln_indent(file, (ExprNode*) expr_node->as.if_else.if_branch, indent);
+
+            if (expr_node->as.if_else.else_branch) {
+                expr_node_fprintln_indent(file, expr_node->as.if_else.else_branch, indent);
             }
         } break;
     }

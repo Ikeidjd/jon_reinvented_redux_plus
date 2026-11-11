@@ -49,6 +49,8 @@ static TypeNode* parser_new_type(Parser* self, TypeNode type);
 
 static bool parser_parse(Parser* self, Program* program);
 
+static bool parse_nodes(Parser* self, Dyna_Node* nodes, BlockNode* block);
+
 static BlockNode* parse_block(Parser* self);
 
 static TypeNode* parse_type(Parser* self);

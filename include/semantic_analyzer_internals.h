@@ -41,9 +41,9 @@ static void sema_error(SemanticAnalyzer* self, Token token, const char* fmt, ...
 
 static void sema_error_incompatible_types(SemanticAnalyzer* self, Token token, Type* left, Type* right);
 
-static void sema_error_invalid_types_for_op(SemanticAnalyzer* self, Token op, Type* left, Type* right);
+static void sema_error_invalid_types_for_op(SemanticAnalyzer* self, Token token, Type* left, Type* right);
 
-static void sema_error_invalid_type_for_op(SemanticAnalyzer* self, Token op, Type* type);
+static void sema_error_invalid_type_for_op(SemanticAnalyzer* self, Token token, Type* type);
 
 static void sema_error_undeclared_variable(SemanticAnalyzer* self, Token token);
 
@@ -52,6 +52,12 @@ static void sema_error_assign_to_immutable(SemanticAnalyzer* self, Token token);
 static void sema_error_casting_non_primitives(SemanticAnalyzer* self, Token token, Type* src, Type* dst);
 
 static void sema_error_casting(SemanticAnalyzer* self, Token token, PrimitiveType* src, PrimitiveType* dst);
+
+static void sema_error_non_bool_for_if_condition(SemanticAnalyzer* self, Token token, Type* type);
+
+static void sema_error_incompatible_types_for_if_branches(SemanticAnalyzer* self, Token token, Type* if_type, Type* else_type);
+
+static void sema_error_no_else_branch_for_non_monostate_if(SemanticAnalyzer* self, Token token, Type* if_type);
 
 static void sema_error_too_many_vars(SemanticAnalyzer* self, Token token);
 
