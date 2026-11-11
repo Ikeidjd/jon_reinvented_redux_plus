@@ -177,7 +177,7 @@ static bool parse_nodes(Parser* self, Dyna_Node* nodes, BlockNode* block) {
 
     if (block) {
         block->rbrace = parser_cur(self);
-        success |= parser_expect(self, TT_RBRACE);
+        success &= parser_expect(self, TT_RBRACE);
     }
 
     return success;

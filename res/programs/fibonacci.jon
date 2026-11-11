@@ -1,0 +1,14 @@
+let n = 10;
+
+mut i = 0;
+mut x = 0;
+mut y = 1;
+
+while i < n {
+    print x;
+
+    y = x + y;
+    x = y - x;
+
+    i = i + 1;
+}
