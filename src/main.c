@@ -2,6 +2,7 @@
 
 #include <string.h>
 
+#include "debug.h"
 #include "file.h"
 #include "string_view.h"
 #include "dynamic_array.h"
@@ -86,7 +87,9 @@ int main(int argc, char** argv) {
         return -1;
     }
 
+#ifdef DEBUG_LOG_FILE
     printf("FILE_START\n%s\nFILE_END\n\n", src_cstr);
+#endif // DEBUG_LOG_FILE
 
     StringView src = sv_new(src_cstr, length);
 
@@ -95,6 +98,7 @@ int main(int argc, char** argv) {
 
     if (!lex_program(src, &tokens)) return -1;
 
+#ifdef DEBUG_LOG_TOKENS
     printf("LEXER_START\n");
 
     for (size_t i = 0; i < tokens.length; i++) {
@@ -103,6 +107,7 @@ int main(int argc, char** argv) {
     }
 
     printf("LEXER_END\n\n");
+#endif // DEBUG_LOG_TOKENS
 
     Sega_Node nodes;
     sega_init(&nodes);
@@ -115,9 +120,11 @@ int main(int argc, char** argv) {
 
     if (!b) return -1;
 
+#ifdef DEBUG_LOG_AST_PARSER
     printf("PARSER START\n");
     program_println(program);
     printf("PARSER END\n\n");
+#endif // DEBUG_LOG_AST_PARSER
 
     TypeArena arena;
     type_arena_init(&arena);
@@ -129,22 +136,32 @@ int main(int argc, char** argv) {
         goto End;
     }
 
+#ifdef DEBUG_LOG_AST_SEMANTIC_ANALYZER
     printf("SEMANTIC ANALYZER START\n");
     program_println(program);
     printf("SEMANTIC ANALYZER END\n\n");
+#endif // DEBUG_LOG_AST_SEMANTIC_ANALYZER
 
     Chunk chunk;
     chunk_init(&chunk);
 
     compile_program(program, &chunk);
 
+#ifdef DEBUG_LOG_BYTECODE
     printf("COMPILER START\n");
     chunk_disassemble(chunk);
     printf("COMPILER END\n\n");
+#endif // DEBUG_LOG_BYTECODE
 
+#ifdef DEBUG_LOG_EXECUTION
     printf("EXECUTION START\n");
+#endif // DEBUG_LOG_EXECUTION
+
     execute_chunk(chunk);
+
+#ifdef DEBUG_LOG_EXECUTION
     printf("EXECUTION END\n\n");
+#endif // DEBUG_LOG_EXECUTION
 
     chunk_destroy(&chunk);
 

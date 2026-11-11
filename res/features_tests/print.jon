@@ -1,11 +1,35 @@
-print 10 * 3;
+# println
+println 10 * 3;
+
+mut f = 0.5;
+f = f * 0.5;
+println f;
+
+println true;
+println false;
 
 let c = 'x';
-print c;
+println c;
 
-print true;
-print false;
+println {};
+
+# The only possible error
+# println;
+
+# print
+print 10 * 3;
 
 mut f = 0.5;
 f = f * 0.5;
 print f;
+
+print true;
+print false;
+
+let c = 'x';
+print c;
+
+print {};
+
+# The only possible error
+# print;

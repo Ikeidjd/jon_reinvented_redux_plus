@@ -1,0 +1,20 @@
+#pragma once
+
+// #define DEBUG_LOG_ALL
+// #define DEBUG_LOG_FILE
+// #define DEBUG_LOG_TOKENS
+// #define DEBUG_LOG_AST_PARSER
+// #define DEBUG_LOG_AST_SEMANTIC_ANALYZER
+// #define DEBUG_LOG_BYTECODE
+// #define DEBUG_LOG_EXECUTION
+
+#ifdef DEBUG_LOG_ALL
+
+#define DEBUG_LOG_FILE
+#define DEBUG_LOG_TOKENS
+#define DEBUG_LOG_AST_PARSER
+#define DEBUG_LOG_AST_SEMANTIC_ANALYZER
+#define DEBUG_LOG_BYTECODE
+#define DEBUG_LOG_EXECUTION
+
+#endif // DEBUG_ALL

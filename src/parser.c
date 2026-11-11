@@ -144,6 +144,23 @@ static bool parse_nodes(Parser* self, Dyna_Node* nodes, BlockNode* block) {
             case TT_KW_WHILE: {
                 node = (Node*) parse_while_loop(self);
             } break;
+            case TT_KW_PRINT:
+            case TT_KW_PRINTLN: {
+                Token token = parser_cur(self);
+                parser_advance(self);
+
+                ExprNode* expr = parse_expr(self);
+                if (!expr || !parser_expect(self, TT_SEMI)) break;
+
+                node = (Node*) parser_new_stat(self, (StatNode) {
+                    .type = STAT_NODE_PRINT,
+                    .as.print = {
+                        .token = token,
+                        .expr = expr,
+                        .is_println = token.type == TT_KW_PRINTLN,
+                    },
+                });
+            } break;
             default: {
                 ExprNode* expr = parse_expr(self);
                 if (!expr) break;

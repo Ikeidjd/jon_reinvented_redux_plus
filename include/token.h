@@ -55,6 +55,9 @@ typedef enum {
 
     TT_KW_WHILE,
 
+    TT_KW_PRINT,
+    TT_KW_PRINTLN,
+
     TT_KW_AS,
 
     TT_KW_INT,

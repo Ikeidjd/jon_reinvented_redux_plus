@@ -142,6 +142,7 @@ struct ExprNode {
 
 typedef enum {
     STAT_NODE_WHILE_LOOP,
+    STAT_NODE_PRINT,
 } StatNodeType;
 
 typedef struct {
@@ -150,9 +151,16 @@ typedef struct {
     BlockNode* body;
 } WhileLoopNode;
 
+typedef struct {
+    Token token;
+    ExprNode* expr;
+    bool is_println;
+} PrintNode;
+
 struct StatNode {
     union {
         WhileLoopNode while_loop;
+        PrintNode print;
     } as;
     StatNodeType type;
 };

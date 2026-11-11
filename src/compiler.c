@@ -202,6 +202,10 @@ static void compile_stat(Compiler* self, StatNode* stat) {
 
             chunk_patch_jump(&self->chunk, condition_jump);
         } break;
+        case STAT_NODE_PRINT: {
+            compile_expr(self, stat->as.print.expr);
+            chunk_emit(&self->chunk, stat->as.print.is_println ? OP_PRINTLN : OP_PRINT, stat->as.print.token.line_number);
+        } break;
     }
 }
 

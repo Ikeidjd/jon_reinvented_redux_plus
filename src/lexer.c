@@ -17,6 +17,8 @@ static Keyword keywords[] = {
     { "if", TT_KW_IF },
     { "else", TT_KW_ELSE },
     { "while", TT_KW_WHILE },
+    { "print", TT_KW_PRINT },
+    { "println", TT_KW_PRINTLN },
     { "as", TT_KW_AS },
     { "int", TT_KW_INT },
     { "float", TT_KW_FLOAT },

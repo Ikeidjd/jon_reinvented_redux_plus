@@ -5,7 +5,10 @@ mut x = 0;
 mut y = 1;
 
 while i < n {
-    print x;
+    print i;
+    print ':';
+    print ' ';
+    println x;
 
     y = x + y;
     x = y - x;

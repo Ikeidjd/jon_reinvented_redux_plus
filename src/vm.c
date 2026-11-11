@@ -1,6 +1,7 @@
 #include "vm.h"
 #include "vm_internals.h"
 
+#include "debug.h"
 #include "little_endian_utils.h"
 
 void execute_chunk(Chunk chunk) {
@@ -66,8 +67,10 @@ static void vm_execute_chunk(VM* self, Chunk chunk) {
     size_t ip = 0;
 
     while (ip < chunk.bytes.length) {
+#ifdef DEBUG_LOG_EXECUTION
         vm_print_stack(self);
         chunk_disassemble_one(chunk, ip);
+#endif // DEBUG_LOG_EXECUTION
 
         switch (READ_OPCODE()) {
             case OP_ADD: {
@@ -199,10 +202,18 @@ static void vm_execute_chunk(VM* self, Chunk chunk) {
             case OP_LOOP: {
                 ip -= READ_U16() + 3;
             } break;
+            case OP_PRINT: {
+                value_print(vm_pop(self));
+            } break;
+            case OP_PRINTLN: {
+                value_println(vm_pop(self));
+            } break;
         }
     }
 
+#ifdef DEBUG_LOG_EXECUTION
     vm_print_stack(self);
+#endif // DEBUG_LOG_EXECUTION
 
     #undef READ_OPCODE
 

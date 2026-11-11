@@ -49,6 +49,9 @@ typedef enum {
     OP_JUMP_IF_TRUE,
     OP_JUMP_IF_FALSE,
     OP_LOOP, // Backwards jump
+
+    OP_PRINT,
+    OP_PRINTLN,
 } Opcode;
 
 const char* opcode_to_string(Opcode opcode);

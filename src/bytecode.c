@@ -81,6 +81,10 @@ const char* opcode_to_string(Opcode opcode) {
             return "OP_JUMP_IF_FALSE";
         case OP_LOOP:
             return "OP_LOOP";
+        case OP_PRINT:
+            return "OP_PRINT";
+        case OP_PRINTLN:
+            return "OP_PRINTLN";
     }
 
     return "";
@@ -230,7 +234,9 @@ static void _chunk_disassemble_one(Chunk self, size_t* offset) {
         case OP_CAST_CHAR:
         case OP_LOAD_MONOSTATE:
         case OP_POP:
-        case OP_DUP: {
+        case OP_DUP:
+        case OP_PRINT:
+        case OP_PRINTLN: {
             chunk_disassemble_simple(self, offset);
         } break;
         case OP_LOAD_INT: {

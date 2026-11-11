@@ -84,6 +84,10 @@ static void stat_node_fprintln_indent(FILE* file, const StatNode* stat, size_t i
             expr_node_fprintln_indent(file, stat->as.while_loop.condition, indent);
             expr_node_fprintln_indent(file, (ExprNode*) stat->as.while_loop.body, indent);
         } break;
+        case STAT_NODE_PRINT: {
+            fprintf(file, "Print:\n");
+            expr_node_fprintln_indent(file, stat->as.print.expr, indent);
+        } break;
     }
 }
 

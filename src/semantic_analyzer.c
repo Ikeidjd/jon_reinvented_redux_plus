@@ -217,8 +217,7 @@ static void sema_error_too_many_vars(SemanticAnalyzer* self, Token token) {
 static bool analyze_node(SemanticAnalyzer* self, Node* node) {
     switch (node->type) {
         case NODE_EXPR: {
-            TypeAndMutability _;
-            return analyze_expr(self, &node->as.expr, &_);
+            return analyze_expr(self, &node->as.expr, NULL);
         }
         case NODE_STAT: {
             return analyze_stat(self, &node->as.stat);
@@ -235,6 +234,9 @@ static bool analyze_node(SemanticAnalyzer* self, Node* node) {
 }
 
 static bool analyze_expr(SemanticAnalyzer* self, ExprNode* expr, TypeAndMutability* out) {
+    TypeAndMutability _;
+    if (!out) out = &_;
+
     *out = from_type(NULL, false);
 
     switch (expr->type) {
@@ -533,6 +535,9 @@ static bool analyze_stat(SemanticAnalyzer* self, StatNode* stat) {
             }
 
             return success;
+        }
+        case STAT_NODE_PRINT: {
+            return analyze_expr(self, stat->as.print.expr, NULL);
         }
     }
 
