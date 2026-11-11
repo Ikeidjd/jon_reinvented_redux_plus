@@ -48,6 +48,7 @@ typedef enum {
     OP_JUMP,
     OP_JUMP_IF_TRUE,
     OP_JUMP_IF_FALSE,
+    OP_LOOP, // Backwards jump
 } Opcode;
 
 const char* opcode_to_string(Opcode opcode);
@@ -79,7 +80,9 @@ void chunk_emit_set_local(Chunk* self, u16 index, size_t line);
 
 size_t chunk_emit_jump(Chunk* self, Opcode opcode, size_t line);
 
-void chunk_patch_jump(Chunk* self, size_t index);
+void chunk_patch_jump(Chunk* self, size_t src);
+
+void chunk_emit_loop(Chunk* self, size_t dst, size_t line);
 
 void chunk_disassemble_one(Chunk self, size_t offset);
 

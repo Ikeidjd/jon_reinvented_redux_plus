@@ -196,6 +196,9 @@ static void vm_execute_chunk(VM* self, Chunk chunk) {
                 u16 increment = READ_U16() - 3;
                 if (!vm_pop(self).as.boolean) ip += increment;
             } break;
+            case OP_LOOP: {
+                ip -= READ_U16() + 3;
+            } break;
         }
     }
 

@@ -74,6 +74,8 @@ const char* tt_repr(TokenType tt) {
             return "TT_KW_IF";
         case TT_KW_ELSE:
             return "TT_KW_ELSE";
+        case TT_KW_WHILE:
+            return "TT_KW_WHILE";
         case TT_KW_AS:
             return "TT_KW_AS";
         case TT_KW_INT:
@@ -169,6 +171,8 @@ const char* tt_error_message_name(TokenType tt) {
             return "keyword 'if'";
         case TT_KW_ELSE:
             return "keyword 'else'";
+        case TT_KW_WHILE:
+            return "keyword 'while'";
         case TT_KW_AS:
             return "keyword 'as'";
         case TT_KW_INT:
@@ -231,6 +235,7 @@ bool tt_is_keyword(TokenType tt) {
         case TT_KW_MUT:
         case TT_KW_IF:
         case TT_KW_ELSE:
+        case TT_KW_WHILE:
         case TT_KW_AS:
         case TT_KW_INT:
         case TT_KW_FLOAT:

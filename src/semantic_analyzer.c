@@ -166,10 +166,10 @@ static void sema_error_casting(SemanticAnalyzer* self, Token token, PrimitiveTyp
     token_show_in_line(stderr, token);
 }
 
-static void sema_error_non_bool_for_if_condition(SemanticAnalyzer* self, Token token, Type* type) {
+static void sema_error_non_bool_for_condition(SemanticAnalyzer* self, Token token, Type* type) {
     (void) self;
 
-    fprintf(stderr, "Semantic error on line %zu: if condition must be bool, but was ", token.line_number + 1);
+    fprintf(stderr, "Semantic error on line %zu: condition must be bool, but was ", token.line_number + 1);
     type_fprint(stderr, type);
     fprintf(stderr, ".\n");
 
@@ -197,6 +197,16 @@ static void sema_error_no_else_branch_for_non_monostate_if(SemanticAnalyzer* sel
     token_show_in_line(stderr, token);
 }
 
+static void sema_error_loop_body_returns_value(SemanticAnalyzer* self, Token token, Type* body_type) {
+    (void) self;
+
+    fprintf(stderr, "Semantic error on line %zu: loop body must return type monostate, but returned ", token.line_number + 1);
+    type_fprint(stderr, body_type);
+    fprintf(stderr, ".\n");
+
+    token_show_in_line(stderr, token);
+}
+
 static void sema_error_too_many_vars(SemanticAnalyzer* self, Token token) {
     (void) self;
 
@@ -209,6 +219,9 @@ static bool analyze_node(SemanticAnalyzer* self, Node* node) {
         case NODE_EXPR: {
             TypeAndMutability _;
             return analyze_expr(self, &node->as.expr, &_);
+        }
+        case NODE_STAT: {
+            return analyze_stat(self, &node->as.stat);
         }
         case NODE_DECL: {
             return analyze_decl(self, &node->as.decl);
@@ -333,7 +346,10 @@ static bool analyze_expr(SemanticAnalyzer* self, ExprNode* expr, TypeAndMutabili
                         sema_error_invalid_types_for_op(self, expr->as.bin_op.token, left.type, right.type);
                         return false;
                     }
-                } break;
+
+                    *out = from_type((Type*) primitive_type_new(&self->arena, PRIMITIVE_TYPE_BOOL), false);
+                    return true;
+                }
             }
 
             *out = left;
@@ -469,7 +485,7 @@ static bool analyze_expr(SemanticAnalyzer* self, ExprNode* expr, TypeAndMutabili
             bool success = analyze_expr(self, expr->as.if_else.condition, &condition);
 
             if (success && condition.type != (Type*) primitive_type_new(&self->arena, PRIMITIVE_TYPE_BOOL)) {
-                sema_error_non_bool_for_if_condition(self, expr->as.if_else.token, condition.type);
+                sema_error_non_bool_for_condition(self, expr->as.if_else.token, condition.type);
                 success = false;
             }
 
@@ -490,6 +506,32 @@ static bool analyze_expr(SemanticAnalyzer* self, ExprNode* expr, TypeAndMutabili
             }
 
             if (success) *out = if_branch;
+            return success;
+        }
+    }
+
+    assert(false && "Unreachable");
+}
+
+static bool analyze_stat(SemanticAnalyzer* self, StatNode* stat) {
+    switch (stat->type) {
+        case STAT_NODE_WHILE_LOOP: {
+            TypeAndMutability condition;
+            bool success = analyze_expr(self, stat->as.while_loop.condition, &condition);
+
+            if (success && condition.type != (Type*) primitive_type_new(&self->arena, PRIMITIVE_TYPE_BOOL)) {
+                sema_error_non_bool_for_condition(self, stat->as.while_loop.token, condition.type);
+                success = false;
+            }
+
+            TypeAndMutability body;
+            success &= analyze_expr(self, (ExprNode*) stat->as.while_loop.body, &body);
+
+            if (success && body.type != (Type*) monostate_type_new(&self->arena)) {
+                sema_error_loop_body_returns_value(self, stat->as.while_loop.token, body.type);
+                success = false;
+            }
+
             return success;
         }
     }

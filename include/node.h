@@ -13,6 +13,7 @@
 // I don't know how well this works with strict aliasing, but that's okay, because I have it disabled
 
 typedef struct ExprNode ExprNode;
+typedef struct StatNode StatNode;
 typedef struct DeclNode DeclNode;
 typedef struct TypeNode TypeNode;
 typedef struct Node Node;
@@ -140,6 +141,23 @@ struct ExprNode {
 };
 
 typedef enum {
+    STAT_NODE_WHILE_LOOP,
+} StatNodeType;
+
+typedef struct {
+    Token token;
+    ExprNode* condition;
+    BlockNode* body;
+} WhileLoopNode;
+
+struct StatNode {
+    union {
+        WhileLoopNode while_loop;
+    } as;
+    StatNodeType type;
+};
+
+typedef enum {
     DECL_NODE_VAR,
 } DeclNodeType;
 
@@ -182,6 +200,7 @@ struct TypeNode {
 
 typedef enum {
     NODE_EXPR,
+    NODE_STAT,
     NODE_DECL,
     NODE_TYPE,
 } NodeType;
@@ -189,6 +208,7 @@ typedef enum {
 struct Node {
     union {
         ExprNode expr;
+        StatNode stat;
         DeclNode decl;
         TypeNode type;
     } as;
@@ -203,6 +223,10 @@ typedef Dyna_Node Program;
 void expr_node_fprintln(FILE* file, const ExprNode* expr_node);
 
 PRINTLN_GEN(const ExprNode*, expr_node)
+
+void stat_node_fprintln(FILE* file, const StatNode* stat_node);
+
+PRINTLN_GEN(const StatNode*, stat_node)
 
 void decl_node_fprintln(FILE* file, const DeclNode* decl_node);
 

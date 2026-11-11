@@ -1,0 +1,26 @@
+# While loops
+mut i = 0;
+
+while i < 4 {
+    i = i + 1;
+}
+
+# Errors
+# Syntax errors
+# while;
+# while {};
+# while 0;
+
+# Type errors
+# while 0 {}
+
+# while false {
+#     a;
+#     b;
+#     c;
+#     d
+# }
+
+# while true {
+#     10
+# }

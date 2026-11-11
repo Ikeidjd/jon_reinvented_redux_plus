@@ -41,7 +41,9 @@ typedef struct {
 
 static void parser_init(Parser* self, Tokens tokens, Sega_Node node_buffer);
 
-static ExprNode* parser_new_expr(Parser* self, ExprNode node);
+static ExprNode* parser_new_expr(Parser* self, ExprNode expr);
+
+static StatNode* parser_new_stat(Parser* self, StatNode stat);
 
 static DeclNode* parser_new_decl(Parser* self, DeclNode decl);
 
@@ -56,6 +58,8 @@ static BlockNode* parse_block(Parser* self);
 static TypeNode* parse_type(Parser* self);
 
 static DeclNode* parse_decl(Parser* self);
+
+static WhileLoopNode* parse_while_loop(Parser* self);
 
 static bool tt_to_bin_op_type(TokenType tt, BinOpType* out);
 

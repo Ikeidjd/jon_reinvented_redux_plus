@@ -95,6 +95,16 @@ static ExprNode* parser_new_expr(Parser* self, ExprNode expr) {
     return &sega_get_ptr(&self->node_buffer, sega_length(self->node_buffer) - 1)->as.expr;
 }
 
+static StatNode* parser_new_stat(Parser* self, StatNode stat) {
+    Node node = {
+        .type = NODE_STAT,
+        .as.stat = stat,
+    };
+
+    sega_append(&self->node_buffer, node);
+    return &sega_get_ptr(&self->node_buffer, sega_length(self->node_buffer) - 1)->as.stat;
+}
+
 static DeclNode* parser_new_decl(Parser* self, DeclNode decl) {
     Node node = {
         .type = NODE_DECL,
@@ -130,6 +140,9 @@ static bool parse_nodes(Parser* self, Dyna_Node* nodes, BlockNode* block) {
             case TT_KW_LET:
             case TT_KW_MUT: {
                 node = (Node*) parse_decl(self);
+            } break;
+            case TT_KW_WHILE: {
+                node = (Node*) parse_while_loop(self);
             } break;
             default: {
                 ExprNode* expr = parse_expr(self);
@@ -265,6 +278,26 @@ static DeclNode* parse_decl(Parser* self) {
             .equals_sign = equals_sign,
             .expr = expr,
             .mutable = mutable,
+        },
+    });
+}
+
+static WhileLoopNode* parse_while_loop(Parser* self) {
+    Token token = parser_cur(self);
+    parser_advance(self);
+
+    ExprNode* condition = parse_expr(self);
+    if (!condition) return NULL;
+
+    BlockNode* body = parse_block(self);
+    if (!body) return NULL;
+
+    return (WhileLoopNode*) parser_new_stat(self, (StatNode) {
+        .type = STAT_NODE_WHILE_LOOP,
+        .as.while_loop = {
+            .token = token,
+            .condition = condition,
+            .body = body,
         },
     });
 }

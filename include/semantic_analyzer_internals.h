@@ -53,17 +53,21 @@ static void sema_error_casting_non_primitives(SemanticAnalyzer* self, Token toke
 
 static void sema_error_casting(SemanticAnalyzer* self, Token token, PrimitiveType* src, PrimitiveType* dst);
 
-static void sema_error_non_bool_for_if_condition(SemanticAnalyzer* self, Token token, Type* type);
+static void sema_error_non_bool_for_condition(SemanticAnalyzer* self, Token token, Type* type);
 
 static void sema_error_incompatible_types_for_if_branches(SemanticAnalyzer* self, Token token, Type* if_type, Type* else_type);
 
 static void sema_error_no_else_branch_for_non_monostate_if(SemanticAnalyzer* self, Token token, Type* if_type);
+
+static void sema_error_loop_body_returns_value(SemanticAnalyzer* self, Token token, Type* body_type);
 
 static void sema_error_too_many_vars(SemanticAnalyzer* self, Token token);
 
 static bool analyze_node(SemanticAnalyzer* self, Node* node);
 
 static bool analyze_expr(SemanticAnalyzer* self, ExprNode* expr, TypeAndMutability* out);
+
+static bool analyze_stat(SemanticAnalyzer* self, StatNode* stat);
 
 static bool analyze_decl(SemanticAnalyzer* self, DeclNode* decl);
 

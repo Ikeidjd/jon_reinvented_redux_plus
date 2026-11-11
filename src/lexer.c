@@ -16,6 +16,7 @@ static Keyword keywords[] = {
     { "mut", TT_KW_MUT },
     { "if", TT_KW_IF },
     { "else", TT_KW_ELSE },
+    { "while", TT_KW_WHILE },
     { "as", TT_KW_AS },
     { "int", TT_KW_INT },
     { "float", TT_KW_FLOAT },

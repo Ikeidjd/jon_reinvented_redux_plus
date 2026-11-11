@@ -23,6 +23,9 @@ static void compile_node(Compiler* self, Node* node) {
             compile_expr(self, &node->as.expr);
             chunk_emit(&self->chunk, OP_POP, self->chunk.lines.data[self->chunk.lines.length - 1]);
         } break;
+        case NODE_STAT: {
+            compile_stat(self, &node->as.stat);
+        } break;
         case NODE_DECL: {
             compile_decl(self, &node->as.decl);
         } break;
@@ -183,6 +186,23 @@ static void compile_expr(Compiler* self, ExprNode* expr) {
 static void compile_expr_lvalue(Compiler* self, ExprNode* expr, size_t line) {
     assert(expr->type == EXPR_NODE_VAR);
     chunk_emit_set_local(&self->chunk, expr->as.var.stack_index, line);
+}
+
+static void compile_stat(Compiler* self, StatNode* stat) {
+    switch (stat->type) {
+        case STAT_NODE_WHILE_LOOP: {
+            size_t pos_before_condition = self->chunk.bytes.length;
+
+            compile_expr(self, stat->as.while_loop.condition);
+            size_t condition_jump = chunk_emit_jump(&self->chunk, OP_JUMP_IF_FALSE, stat->as.while_loop.token.line_number);
+
+            compile_expr(self, (ExprNode*) stat->as.while_loop.body);
+            chunk_emit(&self->chunk, OP_POP, stat->as.while_loop.token.line_number); // Pop the value that was pushed by the loop block (always a monostate value)
+            chunk_emit_loop(&self->chunk, pos_before_condition, stat->as.while_loop.token.line_number);
+
+            chunk_patch_jump(&self->chunk, condition_jump);
+        } break;
+    }
 }
 
 static void compile_decl(Compiler* self, DeclNode* decl) {

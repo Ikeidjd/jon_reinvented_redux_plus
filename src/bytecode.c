@@ -79,6 +79,8 @@ const char* opcode_to_string(Opcode opcode) {
             return "OP_JUMP_IF_TRUE";
         case OP_JUMP_IF_FALSE:
             return "OP_JUMP_IF_FALSE";
+        case OP_LOOP:
+            return "OP_LOOP";
     }
 
     return "";
@@ -145,14 +147,21 @@ size_t chunk_emit_jump(Chunk* self, Opcode opcode, size_t line) {
     return jump_op_index;
 }
 
-void chunk_patch_jump(Chunk* self, size_t index) {
-    size_t increment = self->bytes.length - index;
+void chunk_patch_jump(Chunk* self, size_t src) {
+    size_t increment = self->bytes.length - src;
 
     if ((u16) increment != increment) {
         assert(false && "Jump too far");
     }
 
-    to_le_u16((u16) increment, self->bytes.data + index + 1);
+    to_le_u16((u16) increment, self->bytes.data + src + 1);
+}
+
+void chunk_emit_loop(Chunk* self, size_t dst, size_t line) {
+    u16 increment = self->bytes.length - dst;
+    u8 buf[2];
+    to_le_u16(increment, buf);
+    chunk_emit_args(self, OP_LOOP, 2, buf, line);
 }
 
 static void chunk_disassemble_simple(Chunk self, size_t* offset) {
@@ -247,7 +256,8 @@ static void _chunk_disassemble_one(Chunk self, size_t* offset) {
         case OP_END_BLOCK:
         case OP_JUMP:
         case OP_JUMP_IF_TRUE:
-        case OP_JUMP_IF_FALSE: {
+        case OP_JUMP_IF_FALSE:
+        case OP_LOOP: {
             chunk_disassemble_simple(self, offset);
             printf(" ");
             chunk_disassemble_le_u16(self, offset);

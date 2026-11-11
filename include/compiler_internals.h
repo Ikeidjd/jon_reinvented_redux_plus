@@ -19,6 +19,8 @@ static void compile_expr(Compiler* self, ExprNode* expr);
 
 static void compile_expr_lvalue(Compiler* self, ExprNode* expr, size_t line);
 
+static void compile_stat(Compiler* self, StatNode* stat);
+
 static void compile_decl(Compiler* self, DeclNode* decl);
 
 static void compile_type(Compiler* self, TypeNode* type);
